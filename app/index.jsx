@@ -5,10 +5,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 
 import images from "../constants/images";
+import CButton from "../components/CButton";
+import { router } from "expo-router";
 
 export default function App() {
-  const [counter, setCounter] = useState(0);
-
   return (
     <SafeAreaView className="bg-primary h-full">
       <ScrollView contentContainerStyle={{ height: "100%" }}>
@@ -19,11 +19,31 @@ export default function App() {
             resizeMode="contain"
           />
 
+          <Text className="mt-5 text-white font-bold">
+            image carousel at some point here
+          </Text>
+          <Image
+            source={images.onboard1}
+            className="w-[150px] h-[300px]"
+            resizeMode="contain"
+          />
+
           <View className="relative mt-5">
             <Text className="font-pbold text-white text-center text-3xl">
               Revolutionize the way you budget
             </Text>
+            <Text className="font-pregular text-gray-400 text-xl text-center mt-5">
+              Your all-in-one app to take control of your money while learning
+              smart financial habits. Let's make managing money easy and fun!
+            </Text>
           </View>
+        </View>
+        <View className="flex-1 justify-end items-center p-4">
+          <CButton
+            title={"Continue with email"}
+            handlePress={() => router.push("/sign-in")}
+            containerStyles={"w-full mt-7"}
+          />
         </View>
       </ScrollView>
 
