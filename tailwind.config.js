@@ -18,7 +18,7 @@ module.exports = {
         gray: {
           100: "#CDCDE0",
         },
-        blue: {
+        alt: {
           100: "#203c56",
         }
       },

@@ -15,6 +15,8 @@ const SignUp = () => {
     username: "",
     email: "",
     password: "",
+    firstName: "",
+    lastName: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pwdValid, setPwdValid] = useState(true);
@@ -22,14 +24,26 @@ const SignUp = () => {
   const [regUserValid, setRegUserValid] = useState(true);
 
   const submit = async () => {
-    if (!form.username || !form.email || !form.password) {
+    if (
+      !form.username ||
+      !form.email ||
+      !form.password ||
+      !form.firstName ||
+      !form.lastName
+    ) {
       Alert.alert("Error", "Please fill in all the fields");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const result = await createUser(form.email, form.password, form.username);
+      const result = await createUser(
+        form.email,
+        form.password,
+        form.username,
+        form.firstName,
+        form.lastName
+      );
 
       router.replace("/home");
     } catch (error) {
@@ -52,11 +66,26 @@ const SignUp = () => {
             Sign up to Mintable
           </Text>
 
+          <View className="flex flex-row gap-5 justify-center items-center">
+            <FormField
+              title="First Name"
+              value={form.firstName}
+              handleChangeText={(e) => setForm({ ...form, firstName: e })}
+              otherStyles="mt-7 flex-1"
+            />
+            <FormField
+              title="Last Name"
+              value={form.lastName}
+              handleChangeText={(e) => setForm({ ...form, lastName: e })}
+              otherStyles="mt-7 flex-1"
+            />
+          </View>
+
           <FormField
             title="Username"
             value={form.username}
             handleChangeText={(e) => setForm({ ...form, username: e })}
-            otherStyles="mt-7"
+            otherStyles="mt-3"
           />
 
           {!userValid ? (
