@@ -1,4 +1,4 @@
-import { View, Text, Image, ScrollView } from "react-native";
+import { View, Text, Image, ScrollView, Alert } from "react-native";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, router } from "expo-router";
@@ -6,6 +6,9 @@ import { Link, router } from "expo-router";
 import images from "../../constants/images";
 import FormField from "../../components/FormField";
 import CButton from "../../components/CButton";
+import { MaterialIcons } from "@expo/vector-icons";
+import { createUser } from "../../lib/appwrite";
+import SmallError from "../../components/SmallError";
 
 const SignUp = () => {
   const [form, setForm] = useState({
@@ -14,6 +17,27 @@ const SignUp = () => {
     password: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pwdValid, setPwdValid] = useState(true);
+  const [userValid, setUserValid] = useState(true);
+  const [regUserValid, setRegUserValid] = useState(true);
+
+  const submit = async () => {
+    if (!form.username || !form.email || !form.password) {
+      Alert.alert("Error", "Please fill in all the fields");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await createUser(form.email, form.password, form.username);
+
+      router.replace("/home");
+    } catch (error) {
+      Alert.alert("Error", error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <SafeAreaView className="bg-primary h-full">
@@ -35,6 +59,13 @@ const SignUp = () => {
             otherStyles="mt-7"
           />
 
+          {!userValid ? (
+            <SmallError text="Username cannot be longer than 20 characters" />
+          ) : null}
+          {!regUserValid ? (
+            <SmallError text="Username can only contain letters, numbers, and underscores" />
+          ) : null}
+
           <FormField
             title="Email"
             value={form.email}
@@ -50,10 +81,25 @@ const SignUp = () => {
             otherStyles="mt-3"
           />
 
+          {!pwdValid ? (
+            <SmallError text="Password must contain at least 5 characters" />
+          ) : null}
+
           <CButton
             title="Sign Up"
             handlePress={() => {
-              console.log("signup");
+              form.password.length <= 4
+                ? setPwdValid(false)
+                : setPwdValid(true);
+
+              /[^a-zA-Z0-9_]/.test(form.username)
+                ? setRegUserValid(false)
+                : setRegUserValid(true);
+
+              form.username.length > 20
+                ? setUserValid(false)
+                : setUserValid(true);
+              if (pwdValid && userValid && regUserValid) submit();
             }}
             containerStyles="mt-20"
             isLoading={isSubmitting}
@@ -64,7 +110,7 @@ const SignUp = () => {
               Already have an account?
             </Text>
             <Link
-              href="/sign-up"
+              href="/sign-in"
               className="text-lg font-psemibold text-secondary"
             >
               Sign In
