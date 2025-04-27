@@ -20,6 +20,7 @@ module.exports = {
         },
         alt: {
           100: "#203c56",
+          200: "#1a3045",
         }
       },
       fontFamily: {
