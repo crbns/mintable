@@ -94,7 +94,7 @@ const Home = () => {
     );
 
     if (
-      new Date().getDay() === 1 &&
+      new Date().getDay() === 0 &&
       parseInt(parsedData.lastDate) !== new Date().getDate()
     ) {
       // console.log("replacing old budget list with zeroed out one");
