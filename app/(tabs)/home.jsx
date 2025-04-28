@@ -46,7 +46,6 @@ const Home = () => {
     setIsLoading(false);
   };
 
-  const [balanceContributions, setBalanceContributions] = useState(null);
   const [barData, setBarData] = useState(
     Array.from({ length: 7 }, (_, index) => ({
       day: index + 1,
@@ -60,46 +59,53 @@ const Home = () => {
       CACHE_KEYS.budgetContributions
     );
 
+    let parsedContribution;
     if (!balanceContributionss) {
       // if no balance contributions in cache, initialize the json
       const jsonString =
         '{"values": ["0","0","0","0","0","0","0"],"last": "0","lastDate": "-1"}';
+      parsedContribution = JSON.parse(jsonString);
       await storeToCache(CACHE_KEYS.budgetContributions, jsonString);
-      setBalanceContributions(JSON.parse(jsonString));
     } else {
-      setBalanceContributions(JSON.parse(balanceContributionss));
+      parsedContribution = JSON.parse(balanceContributionss);
     }
 
-    const bCTotal = [1, 2, 3].reduce((partialSum, a) => partialSum + a, 0);
+    const bCTotal = parsedContribution.values.reduce(
+      (partialSum, a) => partialSum + a,
+      0
+    );
 
-    setchangeFromLast(bCTotal - parseInt(balanceContributions.last));
+    setchangeFromLast(bCTotal - parseInt(parsedContribution.last));
 
     setBarData(
       Array.from({ length: 7 }, (_, index) => ({
         day: index + 1,
-        amount: parseInt(balanceContributions.values[index]),
+        amount: parseInt(parsedContribution.values[index]),
       }))
     );
+
+    await updateBudgetListOnNewWeek(parsedContribution);
   };
 
-  const updateBudgetListOnNewWeek = async () => {
-    const bCTotal = balanceContributions.values.reduce(
+  const updateBudgetListOnNewWeek = async (parsedData) => {
+    const bCTotal = parsedData.values.reduce(
       (partialSum, a) => partialSum + parseInt(a),
       0
     );
 
     if (
-      new Date().getDay() === 0 &&
-      parseInt(balanceContributions.lastDate) !== new Date().getDate()
+      new Date().getDay() === 1 &&
+      parseInt(parsedData.lastDate) !== new Date().getDate()
     ) {
-      console.log("replacing old budget list with zeroed out one");
-      const next = balanceContributions;
+      // console.log("replacing old budget list with zeroed out one");
+      const next = parsedData;
 
       next.last = bCTotal;
       next.values = ["0", "0", "0", "0", "0", "0", "0"];
       next.lastDate = new Date().getDate();
-      console.log(JSON.stringify(next));
+      // console.log(JSON.stringify(next));
       storeToCache(CACHE_KEYS.budgetContributions, JSON.stringify(next));
+      await loadBarData();
     }
   };
 
@@ -108,9 +114,11 @@ const Home = () => {
     loadBarData();
 
     // check if the budget contribtion json needs to be refreshed
-    if (balanceContributions) {
-      updateBudgetListOnNewWeek();
-    }
+    // console.log("checking if exists:" + balanceContributions);
+    // if (balanceContributions) {
+    //   updateBudgetListOnNewWeek();
+    //   loadBarData();
+    // }
   }, []);
 
   useEffect(() => {
