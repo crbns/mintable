@@ -10,7 +10,7 @@ import React, { useEffect, useState } from "react";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { loadFromCache, storeToCache, CACHE_KEYS } from "../../lib/cacheUtil";
-import { getCurrentUser } from "../../lib/appwrite";
+import { getCurrentUser, getPreferences } from "../../lib/appwrite";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 

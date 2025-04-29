@@ -13,7 +13,11 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import FormField from "../../components/FormField";
 import CButton from "../../components/CButton";
 import DropDown from "../../components/DropDown";
-import { getPreferences, updatePreferences } from "../../lib/appwrite";
+import {
+  getPreferences,
+  updatePreferences,
+  updateVirtualBalanceUpdateFreq,
+} from "../../lib/appwrite";
 import SmallInfo from "../../components/SmallInfo";
 
 const updateFrequency = () => {
@@ -54,14 +58,11 @@ const updateFrequency = () => {
       return;
     }
 
-    const prefs = await getPreferences();
+    // if (dateFreqDropdownValue !== null) {
+    //   prefs.updateFreqDate = dateFreqDropdownValue;
+    // }
 
-    prefs.updateFreq = frequencyDropdownValue;
-    if (dateFreqDropdownValue !== null) {
-      prefs.updateFreqDate = dateFreqDropdownValue;
-    }
-
-    const res = await updatePreferences(prefs);
+    const res = await updateVirtualBalanceUpdateFreq(frequencyDropdownValue);
     if (res) {
       router.back();
       Alert.alert(

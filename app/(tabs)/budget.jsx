@@ -32,6 +32,7 @@ import {
   getPreferences,
   getVirtualBalance,
   updateBudget,
+  updatePreferences,
   updateVirtualBalance,
 } from "../../lib/appwrite";
 import images from "../../constants/images";
@@ -397,21 +398,16 @@ const Budget = () => {
   const [setupComplete, setSetupComplete] = useState(false);
 
   const checkBudgetSetup = async () => {
-    const hasCompletedBudgetSetUp = await loadFromCache(
-      CACHE_KEYS.hasCompletedBudgetSetUp
-    );
+    const response = await getPreferences();
     // if cache key doesn't exist, call db and store value to cache
-    if (hasCompletedBudgetSetUp === null) {
-      const response = await getPreferences();
-      if (response.budgetOnboardComplete === true) {
-        setSetupComplete(true);
-        storeToCache(CACHE_KEYS.hasCompletedBudgetSetUp, true);
-      } else {
-        setSetupComplete(false);
-        storeToCache(CACHE_KEYS.hasCompletedBudgetSetUp, false);
-      }
-    } else if (hasCompletedBudgetSetUp === true) {
+    if (response.budgetOnboardComplete === null) {
+      setSetupComplete(false);
+      response.budgetOnboardComplete = false;
+      await updatePreferences(response);
+    } else if (response.budgetOnboardComplete === true) {
       setSetupComplete(true);
+    } else if (response.budgetOnboardComplete === false) {
+      setSetupComplete(false);
     }
   };
 
@@ -419,6 +415,7 @@ const Budget = () => {
   useEffect(() => {
     // trigger function to check if setup has been completed
     checkBudgetSetup();
+
     // trigger reload function on start to populate budget data
     onFirstRefresh();
   }, []);

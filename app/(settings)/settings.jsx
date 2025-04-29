@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { nativeApplicationVersion } from "expo-application";
 import CButton from "../../components/CButton";
 import { logOut } from "../../lib/appwrite";
+import { useGlobalContext } from "../../context/GlobalProvider";
 
 const SETTINGS = [
   {
@@ -59,6 +60,8 @@ const SETTINGS = [
 ];
 
 const Settings = () => {
+  const { setUser, setIsLoggedIn } = useGlobalContext();
+
   return (
     <SafeAreaView className="bg-primary h-full px-5 pt-5">
       <ScrollView>
@@ -116,6 +119,8 @@ const Settings = () => {
             const r = await logOut();
             if (r) {
               router.replace("/");
+              setIsLoggedIn(false);
+              setUser(null);
             } else {
               Alert.alert("Error", "Something went wrong");
             }

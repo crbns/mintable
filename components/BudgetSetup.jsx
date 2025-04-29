@@ -15,7 +15,11 @@ import { useSharedValue } from "react-native-reanimated";
 import DropDown from "./DropDown";
 import SmallInfo from "./SmallInfo";
 import FormField from "./FormField";
-import { createVirtualBalance, updatePreferences } from "../lib/appwrite";
+import {
+  createVirtualBalance,
+  updatePreferences,
+  updateVirtualBalanceUpdateAmount,
+} from "../lib/appwrite";
 import { router } from "expo-router";
 
 const BudgetSetup = () => {
@@ -133,17 +137,21 @@ const BudgetSetup = () => {
     console.log("updating");
     const response = await updatePreferences({
       budgetOnboardComplete: true,
-      updateFreq: frequencyDropdownValue,
-      updateFreqDate: dateFreqDropdownValue,
+      // updateFreq: frequencyDropdownValue,
+      // updateFreqDate: dateFreqDropdownValue,
       startAmount: startAmount,
-      addAmount: addAmount,
+      // addAmount: addAmount,
     });
 
     // create virtual balance
     console.log("creating virtual balance");
-    const vBalance = await createVirtualBalance(parseInt(startAmount));
+    const vBalance = await createVirtualBalance(
+      parseInt(startAmount),
+      frequencyDropdownValue,
+      parseInt(addAmount)
+    );
 
-    router.push("budget");
+    router.push("home");
   };
 
   if (step === 0) {

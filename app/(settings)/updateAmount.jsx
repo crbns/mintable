@@ -13,18 +13,18 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import FormField from "../../components/FormField";
 import CButton from "../../components/CButton";
 import DropDown from "../../components/DropDown";
-import { getPreferences, updatePreferences } from "../../lib/appwrite";
+import {
+  getPreferences,
+  updatePreferences,
+  updateVirtualBalanceUpdateAmount,
+} from "../../lib/appwrite";
 
 const updateAmount = () => {
   const [addAmount, setAddAmount] = useState(0);
 
   const onSave = async () => {
     // trusting that the user put in the right amount
-    const prefs = await getPreferences();
-
-    prefs.addAmount = addAmount;
-
-    const res = await updatePreferences(prefs);
+    const res = await updateVirtualBalanceUpdateAmount(addAmount);
     if (res) {
       router.back();
       Alert.alert(
