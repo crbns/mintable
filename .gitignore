@@ -39,5 +39,5 @@ yarn-error.*
 *.tsbuildinfo
 
 # prebuilding
-/ios
-/android
+# /ios
+# /android
