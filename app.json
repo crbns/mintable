@@ -6,7 +6,6 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/icons/splash-icon-light.png",
@@ -21,6 +20,9 @@
         "dark": "./assets/icons/ios-dark.png",
         "light": "./assets/icons/ios-light.png",
         "tinted": "./assets/icons/ios-tinted.png"
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -49,6 +51,15 @@
           }
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "8e1c4870-0bf6-47da-b2b0-1c1232eb077c"
+      }
+    },
+    "owner": "crbeans"
   }
 }

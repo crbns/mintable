@@ -638,7 +638,7 @@ const Budget = () => {
             />
 
             <View className="flex-row w-full my-1 h-20">
-              <View className="items-center justify-center mx-2">
+              {/* <View className="items-center justify-center mx-2">
                 <Text className="text-gray-100 font-pmedium text-base mb-1">
                   Repeating?
                 </Text>
@@ -648,7 +648,7 @@ const Budget = () => {
                     setBudgetForm({ ...budgetForm, repeating: checked })
                   }
                 />
-              </View>
+              </View> */}
               <View className="flex-1 ml-2">
                 {budgetForm.repeating ? (
                   <DropDown
