@@ -161,68 +161,70 @@ const BudgetSetup = () => {
           className="h-full bg-primary px-5"
           edges={["right", "top", "left"]}
         >
-          <Text className="text-white font-psemibold text-3xl text-center mt-4">
-            Welcome to Budgeting{"\n"}with Mintable
-          </Text>
+          <ScrollView>
+            <Text className="text-white font-psemibold text-3xl text-center mt-4">
+              Welcome to Budgeting{"\n"}with Mintable
+            </Text>
 
-          <Text className="text-gray-500 font-regular text-md text-center mt-10">
-            Create and manage your own budgets.
-          </Text>
+            <Text className="text-gray-500 font-regular text-md text-center mt-10">
+              Create and manage your own budgets.
+            </Text>
 
-          <View className="border-2 rounded-md border-alt-100 p-5 mt-2 border-b-4">
-            <BudgetContainer
-              name="Movie Tickets"
-              progress={50}
-              goal={200}
-              noMargin={true}
-            />
-          </View>
+            <View className="border-2 rounded-md border-alt-100 p-5 mt-2 border-b-4">
+              <BudgetContainer
+                name="Movie Tickets"
+                progress={50}
+                goal={200}
+                noMargin={true}
+              />
+            </View>
 
-          <Text className="text-gray-500 font-regular text-md text-center mt-10">
-            Set due dates that work for you.
-          </Text>
+            <Text className="text-gray-500 font-regular text-md text-center mt-10">
+              Set due dates that work for you.
+            </Text>
 
-          <View className="border-2 rounded-md border-alt-100 border-b-4 p-5 mt-2">
-            <BudgetContainer
-              name="Vacation"
-              progress={1355}
-              goal={1500}
-              noMargin={true}
-              end={twoDays}
-              color={"#ffadad"}
-            />
-          </View>
+            <View className="border-2 rounded-md border-alt-100 border-b-4 p-5 mt-2">
+              <BudgetContainer
+                name="Vacation"
+                progress={1355}
+                goal={1500}
+                noMargin={true}
+                end={twoDays}
+                color={"#ffadad"}
+              />
+            </View>
 
-          <Text className="text-gray-500 font-regular text-md text-center mt-10">
-            Customize how often your virtual balance resets.
-          </Text>
+            <Text className="text-gray-500 font-regular text-md text-center mt-10">
+              Customize how often your virtual balance resets.
+            </Text>
 
-          <View className="border-2 border-b-4 border-alt-100 p-3 rounded-md mt-3">
-            <View className="flex-row">
-              <View className="justify-center items-start">
-                <Text className="text-white font-pregular">
-                  Amount to Allocate
-                </Text>
-                <Text className="text-5xl font-plight text-white pt-3">
-                  $1,000
-                </Text>
-              </View>
-              <View className="flex-1 items-end justify-center">
-                <Text className="text-gray-500 text-xl font-pregular text-right">
-                  Reloads in: {"\n"} 1 Week
-                </Text>
+            <View className="border-2 border-b-4 border-alt-100 p-3 rounded-md mt-3">
+              <View className="flex-row">
+                <View className="justify-center items-start">
+                  <Text className="text-white font-pregular">
+                    Amount to Allocate
+                  </Text>
+                  <Text className="text-5xl font-plight text-white pt-3">
+                    $1,000
+                  </Text>
+                </View>
+                <View className="flex-1 items-end justify-center">
+                  <Text className="text-gray-500 text-xl font-pregular text-right">
+                    Reloads in: {"\n"} 1 Week
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
 
-          <View className="flex-row flex-1 justify-end items-end mb-4 gap-4">
-            <CButton
-              title={"Get Started"}
-              textWeight={"font-pregular"}
-              containerStyles={"flex-1"}
-              handlePress={() => setStep(1)}
-            />
-          </View>
+            <View className="flex-row flex-1 justify-end items-end mb-4 gap-4">
+              <CButton
+                title={"Get Started"}
+                textWeight={"font-pregular"}
+                containerStyles={"flex-1 mt-5"}
+                handlePress={() => setStep(1)}
+              />
+            </View>
+          </ScrollView>
         </SafeAreaView>
       </>
     );

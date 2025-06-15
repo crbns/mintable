@@ -10,7 +10,6 @@ import React, { useEffect, useState } from "react";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { loadFromCache, storeToCache, CACHE_KEYS } from "../../lib/cacheUtil";
-import { getCurrentUser, getPreferences } from "../../lib/appwrite";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
@@ -18,10 +17,12 @@ import pregular from "../../assets/fonts/Poppins-Regular.ttf";
 import CButton from "../../components/CButton";
 import BudgetContributionGraph from "../../components/BudgetContributionGraph";
 import HomeBudgetList from "../../components/HomeBudgetList";
+import { useGlobalContext } from "../../context/GlobalProvider";
 
 const Home = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [data, setData] = useState(null);
+  const { user, isLoggedIn, isLoading } = useGlobalContext();
+
+  // const [data, setData] = useState(null);
   const [greeting, setGreeting] = useState("");
 
   // key of cache, fn: appwrite function in appwrite.js
@@ -110,7 +111,7 @@ const Home = () => {
   };
 
   useEffect(() => {
-    loadData(CACHE_KEYS.userData, getCurrentUser);
+    // loadData(CACHE_KEYS.userData, getCurrentUser);
     loadBarData();
 
     // check if the budget contribtion json needs to be refreshed
@@ -152,25 +153,40 @@ const Home = () => {
     >
       <ScrollView className="h-full" showsVerticalScrollIndicator={false}>
         <View className="justify-center">
-          <View className="flex-row justify-center">
-            <Text className="text-white font-psemibold text-left text-4xl items-start flex-1">
-              {greeting}, {"\n"}
-              {data.firstName}
+          <View className="flex-row justify-center mb-2">
+            <Text className="text-white font-psemibold text-left text-3xl items-start flex-1">
+              {greeting}
+              {isLoggedIn && "\n" + user?.firstName}
             </Text>
             <TouchableOpacity
-              className="items-end p-5"
+              className="items-end mr-5"
               onPress={() => router.push("settings")}
             >
               <MaterialCommunityIcons
                 name="cog-outline"
                 color={"gray"}
-                size={32}
+                size={28}
               />
             </TouchableOpacity>
           </View>
-          <View className="h-1 bg-alt-100 rounded-full mt-2" />
+          <View className="h-1 bg-alt-100 rounded-full" />
 
-          <BudgetContributionGraph />
+          <View className="flex-1 justify-between">
+            {isLoggedIn ? (
+              <BudgetContributionGraph />
+            ) : (
+              <>
+                <Text className="mt-3 font-psemibold text-2xl text-white text-center">
+                  Log in to view your weekly budget contributions.
+                </Text>
+                <CButton
+                  title={"Log In"}
+                  containerStyles={"my-5"}
+                  handlePress={() => router.push("/sign-in")}
+                />
+              </>
+            )}
+          </View>
 
           {/* Can be added in a later release
           
@@ -181,7 +197,7 @@ const Home = () => {
 
           <HomeBudgetList /> */}
 
-          <Text className="text-white font-pregular text-left text-3xl mt-20">
+          <Text className="text-white font-pregular text-left text-3xl mt-14">
             Learn
           </Text>
           <View className="h-1 bg-alt-100 rounded-full mt-2" />

@@ -7,10 +7,13 @@ import images from "../../constants/images";
 import FormField from "../../components/FormField";
 import CButton from "../../components/CButton";
 import { MaterialIcons } from "@expo/vector-icons";
-import { createUser } from "../../lib/appwrite";
+import { createUser, getCurrentUser } from "../../lib/appwrite";
 import SmallError from "../../components/SmallError";
+import { useGlobalContext } from "../../context/GlobalProvider";
 
 const SignUp = () => {
+  const { setUser, setIsLoggedIn } = useGlobalContext();
+
   const [form, setForm] = useState({
     username: "",
     email: "",
@@ -44,6 +47,11 @@ const SignUp = () => {
         form.firstName,
         form.lastName
       );
+
+      const user = await getCurrentUser();
+
+      setUser(user);
+      setIsLoggedIn(true);
 
       router.replace("/home");
     } catch (error) {

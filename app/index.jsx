@@ -24,12 +24,9 @@ export default function App() {
             resizeMode="contain"
           />
 
-          <Text className="mt-5 text-white font-bold">
-            image carousel at some point here
-          </Text>
           <Image
-            source={images.onboard1}
-            className="w-[150px] h-[300px]"
+            source={images.onboard2}
+            className="w-full h-[300px]"
             resizeMode="contain"
           />
 
@@ -45,8 +42,8 @@ export default function App() {
         </View>
         <View className="flex-1 justify-end items-center p-4">
           <CButton
-            title={"Continue with email"}
-            handlePress={() => router.push("/sign-in")}
+            title={"Get Started"}
+            handlePress={() => router.push("/home")}
             containerStyles={"w-full mt-7"}
           />
         </View>

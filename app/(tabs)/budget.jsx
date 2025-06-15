@@ -42,8 +42,33 @@ import BudgetSetup from "../../components/BudgetSetup";
 import { loadFromCache, storeToCache, CACHE_KEYS } from "../../lib/cacheUtil";
 import eventBus from "../../lib/eventBus";
 import { router } from "expo-router";
+import { useGlobalContext } from "../../context/GlobalProvider";
 
 const Budget = () => {
+  const { user, isLoggedIn } = useGlobalContext();
+
+  if (!isLoggedIn) {
+    return (
+      <SafeAreaView
+        className="bg-primary h-full px-5 pt-5"
+        edges={["right", "top", "left"]}
+      >
+        <View className="flex-1 justify-between">
+          <View className="flex-1 justify-center">
+            <Text className="font-psemibold text-center text-2xl text-white">
+              Log in to Mintable to create budgets.
+            </Text>
+          </View>
+          <CButton
+            title={"Log In"}
+            containerStyles={"mb-5"}
+            handlePress={() => router.push("/sign-in")}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   const [progress, setProgress] = useState(0);
   const [virtualBalance, setVirtualBalance] = useState(0);
   const [items, setItems] = useState([]);
@@ -189,7 +214,7 @@ const Budget = () => {
     setItems(items.filter((item) => item.id !== id));
   };
 
-  const { data: budgets, refetch } = useAppwrite(getBudgets);
+  const { data: budgets, refetch } = useAppwrite(getBudgets, user);
   // const { data: vBalance, vBRefetch } = useAppwrite(getVirtualBalance);
 
   const [refreshing, setRefreshing] = useState(false);
@@ -197,10 +222,12 @@ const Budget = () => {
   const onFirstRefresh = async () => {
     setRefreshing(true);
 
-    const budgetData = await getBudgets();
+    console.log("on first refresh user value:" + user);
+
+    const budgetData = await getBudgets(user);
     // await vBRefetch(); not sure why its hanging on this
     // temporary solution
-    const vBal = await getVirtualBalance();
+    const vBal = await getVirtualBalance(user);
 
     setItems(() => []);
 
@@ -232,10 +259,6 @@ const Budget = () => {
 
     setItems(newItems);
 
-    // console.log(budgets);
-    // console.log(newItems);
-    // console.log(vBal[0].balance);
-
     setVirtualBalance(vBal[0].balance);
 
     setRefreshing(false);
@@ -244,10 +267,11 @@ const Budget = () => {
   const onRefresh = async () => {
     setRefreshing(true);
 
-    await refetch();
+    console.log("calling refetch with: " + user);
+    await refetch(user);
     // await vBRefetch(); not sure why its hanging on this
     // temporary solution
-    const vBal = await getVirtualBalance();
+    const vBal = await getVirtualBalance(user);
 
     setItems(() => []);
 
@@ -304,7 +328,9 @@ const Budget = () => {
     setCreateBudgetLoading(true);
 
     try {
-      const currentUser = await getCurrentUser();
+      // const currentUser = await getCurrentUser();
+
+      const currentUser = user;
 
       const result = await createBudgetDb(
         budgetForm.title,
@@ -337,19 +363,22 @@ const Budget = () => {
 
   // called when budget is selected in allocate mode
   const allocateMode = async (id, progress, goal) => {
-    const newProgress = progress + allocateAmount;
+    let newProgress = progress + allocateAmount;
     let excessAllocated = false;
+    let amountToSubtract = allocateAmount;
     try {
-      if (progress + allocateAmount > goal) {
+      if (progress + amountToSubtract > goal) {
         // excess money, give it back to the user
         excessAllocated = true;
-        setAllocateAmount(allocateAmount - (progress + allocateAmount));
+        amountToSubtract = goal - progress;
         newProgress = goal;
       }
 
       const result = await updateBudget(id, newProgress);
       // edit amount to allocate
-      const newVB = await updateVirtualBalance(virtualBalance - allocateAmount);
+      const newVB = await updateVirtualBalance(
+        virtualBalance - amountToSubtract
+      );
 
       // upload current progress to cache
 
@@ -366,7 +395,7 @@ const Budget = () => {
         await loadFromCache(CACHE_KEYS.budgetContributions)
       );
       const before = parseInt(budgetContributions.values[today]);
-      const newAmount = before + allocateAmount;
+      const newAmount = before + amountToSubtract;
       budgetContributions.values[today] = newAmount.toString();
       const budgetContributionsString = JSON.stringify(budgetContributions);
       await storeToCache(
@@ -384,6 +413,11 @@ const Budget = () => {
 
       if (!result) {
         Alert.alert("Error", "Something went wrong");
+      } else {
+        Alert.alert(
+          "Success",
+          "Be sure to refresh the page to see the changes!"
+        );
       }
     } catch (error) {
       Alert.alert("Error", "Something went wrong");
@@ -438,7 +472,7 @@ const Budget = () => {
               setRefreshing(true);
               setTimeout(() => {
                 onRefresh();
-              }, 3000);
+              }, 1000);
             }}
           />
         }
@@ -555,6 +589,9 @@ const Budget = () => {
             ))
           )}
         </View>
+        <Text className="text-gray-500 font-pregular text-center mt-2">
+          Swipe down to refresh page
+        </Text>
 
         {/* <CButton
           title={"another one"}
