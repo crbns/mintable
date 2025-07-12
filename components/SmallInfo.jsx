@@ -5,9 +5,8 @@ import { MaterialIcons } from "@expo/vector-icons";
 
 const SmallInfo = ({ text, containerStyle, iconSize, textStyle }) => {
   return (
-    <View
-      className={`mt-4 flex-row justify-center items-center ${containerStyle}`}
-    >
+    // TODO: Why the fuck is there margin in the component
+    <View className={`flex-row justify-center items-center ${containerStyle}`}>
       <MaterialIcons
         name="error-outline"
         size={iconSize ?? 16}

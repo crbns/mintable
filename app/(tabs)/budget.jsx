@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
   Image,
 } from "react-native";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import BudgetContainer from "../../components/BudgetContainer";
 import CButton from "../../components/CButton";
@@ -27,6 +27,7 @@ import RNDateTimePicker from "@react-native-community/datetimepicker";
 import useAppwrite from "../../lib/useAppwrite";
 import {
   createBudget as createBudgetDb,
+  getBudgetByDocId,
   getBudgets,
   getCurrentUser,
   getPreferences,
@@ -43,6 +44,7 @@ import { loadFromCache, storeToCache, CACHE_KEYS } from "../../lib/cacheUtil";
 import eventBus from "../../lib/eventBus";
 import { router } from "expo-router";
 import { useGlobalContext } from "../../context/GlobalProvider";
+import LottieView from "lottie-react-native";
 
 const Budget = () => {
   const { user, isLoggedIn } = useGlobalContext();
@@ -54,16 +56,28 @@ const Budget = () => {
         edges={["right", "top", "left"]}
       >
         <View className="flex-1 justify-between">
-          <View className="flex-1 justify-center">
+          <View className="flex-1 justify-center mx-5">
             <Text className="font-psemibold text-center text-2xl text-white">
               Log in to Mintable to create budgets.
             </Text>
+            <Text className="font-pregular text-center text-rg text-gray-500 mt-5">
+              We ask you to log in to securely save and sync your budget data
+              across devices. We never share your information.
+            </Text>
           </View>
-          <CButton
-            title={"Log In"}
-            containerStyles={"mb-5"}
-            handlePress={() => router.push("/sign-in")}
-          />
+          <View className="mb-5">
+            <CButton
+              title={"Log In"}
+              handlePress={() => router.push("/sign-in")}
+            />
+            <CButton
+              title={"Try as Guest"}
+              containerStyles={"mt-3 border-2 border-gray-600"}
+              containerColor={"bg-primary"}
+              textColor={"text-gray-600"}
+              handlePress={() => router.push("/budgetDemo")}
+            />
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -222,8 +236,6 @@ const Budget = () => {
   const onFirstRefresh = async () => {
     setRefreshing(true);
 
-    console.log("on first refresh user value:" + user);
-
     const budgetData = await getBudgets(user);
     // await vBRefetch(); not sure why its hanging on this
     // temporary solution
@@ -244,7 +256,7 @@ const Budget = () => {
 
     const newItems = budgetData
       .filter(function (element) {
-        console.log(element.progress + "," + element.goal);
+        // console.log(element.progress + "," + element.goal);
         return element.progress < element.goal;
       })
       .map((element) => ({
@@ -267,46 +279,22 @@ const Budget = () => {
   const onRefresh = async () => {
     setRefreshing(true);
 
-    console.log("calling refetch with: " + user);
-    await refetch(user);
-    // await vBRefetch(); not sure why its hanging on this
-    // temporary solution
+    const freshBudgets = await refetch(user);
     const vBal = await getVirtualBalance(user);
 
-    setItems(() => []);
-
-    // add each budget to items
-    // const newItems = budgets.map((element) => ({
-    //   id: element.$id,
-    //   name: element.title,
-    //   color: element.color,
-    //   progress: element.progress,
-    //   goal: element.goal,
-    //   start: element.start,
-    //   end: element.end,
-    // }));
-
-    const newItems = budgets
-      .filter(function (element) {
-        console.log(element.progress + "," + element.goal);
-        return element.progress < element.goal;
-      })
-      .map((element) => ({
-        id: element.$id,
-        name: element.title,
-        color: element.color,
-        progress: element.progress,
-        goal: element.goal,
-        start: element.start,
-        end: element.end,
+    const filteredItems = freshBudgets
+      .filter((b) => b.progress < b.goal)
+      .map((b) => ({
+        id: b.$id,
+        name: b.title,
+        color: b.color,
+        progress: b.progress,
+        goal: b.goal,
+        start: b.start,
+        end: b.end,
       }));
 
-    setItems(newItems);
-
-    // console.log(budgets);
-    // console.log(newItems);
-    // console.log(vBal[0].balance);
-
+    setItems(filteredItems);
     setVirtualBalance(vBal[0].balance);
 
     setRefreshing(false);
@@ -322,9 +310,9 @@ const Budget = () => {
       Alert.alert("Error", "Please fill out all fields");
       return;
     }
-    if (!budgetForm.color) {
-      budgetForm.color = colorDropdownValue;
-    }
+
+    budgetForm.color = colorDropdownValue;
+
     setCreateBudgetLoading(true);
 
     try {
@@ -347,8 +335,14 @@ const Budget = () => {
         Alert.alert("Error", "Something went wrong");
       } else {
         setIsBudgetOpen(false);
+        // Alert.alert(
+        //   "Success",
+        //   "Be sure to refresh the page to see the changes!"
+        // );
       }
-      await onRefresh();
+      setTimeout(() => {
+        onRefresh();
+      }, 1000);
     } catch (error) {
       Alert.alert("Error", "Something went wrong");
       console.error(error);
@@ -362,7 +356,24 @@ const Budget = () => {
   const [isAllocateMode, setIsAllocateMode] = useState(false);
 
   // called when budget is selected in allocate mode
-  const allocateMode = async (id, progress, goal) => {
+  const allocateMode = async (id) => {
+    if (items.length === 0) {
+      Alert.alert(
+        "Error",
+        "You need to have at least one budget to allocate money to!"
+      );
+      setIsAllocateMode(false);
+      // reset allocate amount saving myself from future bugs
+      setAllocateAmount(0);
+      return;
+    }
+
+    // get budget from db instead of relying on possibly outdated ui data
+    const budgetFromDb = await getBudgetByDocId(user, id);
+    // update progress and goal accoring to databse
+    const progress = budgetFromDb.progress;
+    const goal = budgetFromDb.goal;
+
     let newProgress = progress + allocateAmount;
     let excessAllocated = false;
     let amountToSubtract = allocateAmount;
@@ -380,30 +391,6 @@ const Budget = () => {
         virtualBalance - amountToSubtract
       );
 
-      // upload current progress to cache
-
-      // if the key doesnt return anything, initialize the json string
-      if ((await loadFromCache(CACHE_KEYS.budgetContributions)) === null) {
-        const jsonString =
-          '{"values": ["0","0","0","0","0","0","0"],"last": "0"}';
-        storeToCache(CACHE_KEYS.budgetContributions, jsonString);
-      }
-
-      const today = new Date().getDay();
-
-      const budgetContributions = JSON.parse(
-        await loadFromCache(CACHE_KEYS.budgetContributions)
-      );
-      const before = parseInt(budgetContributions.values[today]);
-      const newAmount = before + amountToSubtract;
-      budgetContributions.values[today] = newAmount.toString();
-      const budgetContributionsString = JSON.stringify(budgetContributions);
-      await storeToCache(
-        CACHE_KEYS.budgetContributions,
-        budgetContributionsString
-      );
-      eventBus.emit("newContribution", budgetContributionsString);
-
       if (excessAllocated) {
         Alert.alert(
           "Your budget is overflowing with money!",
@@ -414,10 +401,29 @@ const Budget = () => {
       if (!result) {
         Alert.alert("Error", "Something went wrong");
       } else {
-        Alert.alert(
-          "Success",
-          "Be sure to refresh the page to see the changes!"
+        // update budget contribution grpah
+        const today = new Date().getDay();
+
+        const budgetContributions = JSON.parse(
+          await loadFromCache(CACHE_KEYS.budgetContributions)
         );
+        const before = parseInt(budgetContributions.values[today]);
+        const newAmount = before + amountToSubtract;
+        budgetContributions.values[today] = newAmount.toString();
+        const budgetContributionsString = JSON.stringify(budgetContributions);
+        await storeToCache(
+          CACHE_KEYS.budgetContributions,
+          budgetContributionsString
+        );
+        eventBus.emit("newContribution", budgetContributionsString);
+        // Alert.alert(
+        //   "Success",
+        //   "Be sure to refresh the page to see the changes!"
+        // );
+
+        setTimeout(() => {
+          onRefresh();
+        }, 1);
       }
     } catch (error) {
       Alert.alert("Error", "Something went wrong");
@@ -454,8 +460,19 @@ const Budget = () => {
     onFirstRefresh();
   }, []);
 
+  useEffect(() => {
+    onFirstRefresh();
+  }, [setupComplete]);
+
+  const setSetupCompleteTrue = () => {
+    setSetupComplete(true);
+  };
+
+  // animation refs
+  const selectBudgetAnimationRef = useRef(null);
+
   if (!setupComplete) {
-    return <BudgetSetup />;
+    return <BudgetSetup update={setSetupCompleteTrue} />;
   }
 
   return (
@@ -472,7 +489,7 @@ const Budget = () => {
               setRefreshing(true);
               setTimeout(() => {
                 onRefresh();
-              }, 1000);
+              }, 100);
             }}
           />
         }
@@ -506,7 +523,16 @@ const Budget = () => {
             containerColor={"bg-alt-100"}
             textColor={"text-white"}
             textWeight={"font-pregular"}
-            handlePress={() => setAllocateModalOpen(true)}
+            handlePress={() => {
+              if (items.length === 0) {
+                Alert.alert(
+                  "Error",
+                  "You need to have at least one budget to allocate money to!"
+                );
+              } else if (!isAllocateMode) {
+                setAllocateModalOpen(true);
+              }
+            }}
           />
         </View>
 
@@ -518,11 +544,14 @@ const Budget = () => {
           <View className="bg-primary w-full p-4 rounded-md">
             <View className="flex-row align-middle items-center">
               <Text className="flex-1 text-white font-psemibold text-xl px-1">
-                Create Budget
+                Allocate Money
               </Text>
               <TouchableOpacity
                 className="items-end"
-                onPress={() => setAllocateModalOpen(false)}
+                onPress={() => {
+                  setAllocateModalOpen(false);
+                  setIsAllocateMode(false);
+                }}
               >
                 <MaterialCommunityIcons name="close" color={"gray"} size={32} />
               </TouchableOpacity>
@@ -562,13 +591,38 @@ const Budget = () => {
               containerStyles={"mt-3"}
               handlePress={() => {
                 if (virtualBalance - allocateAmount >= 0) {
-                  setAllocateModalOpen(false);
+                  selectBudgetAnimationRef.current?.play();
+                  setTimeout(() => {
+                    setAllocateModalOpen(false);
+                  }, 1000);
                   setIsAllocateMode(true);
                 }
               }}
             />
+
+            <LottieView
+              source={require("../../assets/animations/coins_explode.json")}
+              ref={selectBudgetAnimationRef}
+              style={{
+                width: 200,
+                height: 200,
+                position: "absolute",
+                bottom: -60,
+                alignSelf: "center",
+                zIndex: 10,
+                pointerEvents: "none",
+              }}
+              autoPlay={false}
+              loop={false}
+            />
           </View>
         </Modal>
+
+        {isAllocateMode && (
+          <Text className="mt-5 text-white font-psemibold">
+            Click on a budget to allocate your money!
+          </Text>
+        )}
 
         <View className="mt-5">
           {refreshing ? (
@@ -584,7 +638,7 @@ const Budget = () => {
                 start={item.start}
                 end={item.end}
                 buttonDisabled={!isAllocateMode}
-                onPress={() => allocateMode(item.id, item.progress, item.goal)}
+                onPress={() => allocateMode(item.id)}
               />
             ))
           )}
@@ -617,7 +671,7 @@ const Budget = () => {
         <IconButton
           iconName={"plus"}
           containerColor={"bg-alt-100"}
-          containerStyles={"mt-3"}
+          containerStyles={"mt-3 mb-10"}
           handlePress={() => setIsBudgetOpen(true)}
         />
 

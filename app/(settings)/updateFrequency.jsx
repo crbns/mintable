@@ -109,6 +109,7 @@ const updateFrequency = () => {
                 "Your virtual balance will be updated on the first day of each month."
               }
               iconSize={20}
+              containerStyle={"mt-5"}
             />
           )}
           {frequencyDropdownValue === "quarterly" && (
@@ -117,6 +118,7 @@ const updateFrequency = () => {
                 "Your virtual balance will be updated on the first day of each quarter."
               }
               iconSize={20}
+              containerStyle={"mt-5"}
             />
           )}
           {frequencyDropdownValue === "yearly" && (
@@ -125,6 +127,7 @@ const updateFrequency = () => {
                 "Your virtual balance will be updated on the first day of the year."
               }
               iconSize={20}
+              containerStyle={"mt-5"}
             />
           )}
           {frequencyDropdownValue !== "yearly" &&

@@ -22,7 +22,7 @@ import {
 } from "../lib/appwrite";
 import { router } from "expo-router";
 
-const BudgetSetup = () => {
+const BudgetSetup = ({ update }) => {
   const [step, setStep] = useState(0);
   const totalSteps = 4;
 
@@ -151,7 +151,8 @@ const BudgetSetup = () => {
       parseInt(addAmount)
     );
 
-    router.push("home");
+    router.replace("budget");
+    update();
   };
 
   if (step === 0) {
@@ -270,6 +271,7 @@ const BudgetSetup = () => {
                   "Your virtual balance will be updated on the first day of each month."
                 }
                 iconSize={20}
+                containerStyle={"mt-5"}
               />
             )}
             {frequencyDropdownValue === "quarterly" && (
@@ -278,6 +280,7 @@ const BudgetSetup = () => {
                   "Your virtual balance will be updated on the first day of each quarter."
                 }
                 iconSize={20}
+                containerStyle={"mt-5"}
               />
             )}
             {frequencyDropdownValue === "yearly" && (
@@ -286,6 +289,7 @@ const BudgetSetup = () => {
                   "Your virtual balance will be updated on the first day of the year."
                 }
                 iconSize={20}
+                containerStyle={"mt-5"}
               />
             )}
             {frequencyDropdownValue !== "yearly" &&

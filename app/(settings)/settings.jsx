@@ -17,31 +17,31 @@ import { useGlobalContext } from "../../context/GlobalProvider";
 import Modal from "../../components/Modal";
 
 const SETTINGS = [
-  {
-    group: "Profile",
-    requiresAccount: true,
-    items: [
-      {
-        id: "name",
-        icon: "account-edit-outline",
-        label: "Edit name",
-        type: "link",
-      },
-      // Add functionality later for email and password changes
-      // {
-      //   id: "email",
-      //   icon: "email-edit-outline",
-      //   label: "Change email",
-      //   type: "link",
-      // },
-      // {
-      //   id: "password",
-      //   icon: "key-outline",
-      //   label: "Change password",
-      //   type: "link",
-      // },
-    ],
-  },
+  // {
+  //   group: "Profile",
+  //   requiresAccount: true,
+  //   items: [
+  //     {
+  //       id: "name",
+  //       icon: "account-edit-outline",
+  //       label: "Edit name",
+  //       type: "link",
+  //     },
+  //     // Add functionality later for email and password changes
+  //     // {
+  //     //   id: "email",
+  //     //   icon: "email-edit-outline",
+  //     //   label: "Change email",
+  //     //   type: "link",
+  //     // },
+  //     // {
+  //     //   id: "password",
+  //     //   icon: "key-outline",
+  //     //   label: "Change password",
+  //     //   type: "link",
+  //     // },
+  //   ],
+  // },
   {
     group: "Budgeting",
     requiresAccount: true,
@@ -70,12 +70,19 @@ const SETTINGS = [
         label: "Report Bugs",
         type: "link",
       },
+      {
+        id: "bugReport",
+        icon: "chat-processing",
+        label: "Give Feedback",
+        type: "redirect",
+        link: "https://forms.gle/5Hq8bfCZeRBhsCcB9",
+      },
     ],
   },
 ];
 
 const Settings = () => {
-  const { setUser, setIsLoggedIn, isLoggedIn } = useGlobalContext();
+  const { setUser, setIsLoggedIn, isLoggedIn, user } = useGlobalContext();
   const [deleteAccountModal, setDeleteAccountModal] = useState(false);
 
   return (
@@ -102,11 +109,27 @@ const Settings = () => {
                   {group}
                 </Text>
                 <View className="rounded-md bg-alt-100 mt-2 py-1">
-                  {items.map(({ id, icon, label, type }) => (
+                  {items.map(({ id, icon, label, type, link }) => (
                     <View key={id}>
                       <TouchableOpacity
                         className="flex-row p-5 items-center"
-                        onPress={() => router.push(id)}
+                        onPress={() => {
+                          switch (type) {
+                            case "link":
+                              router.push(id);
+                              break;
+                            case "redirect":
+                              Linking.openURL(link);
+
+                            default:
+                              console.error(
+                                "No type set for settings object with id" +
+                                  id +
+                                  "!"
+                              );
+                              break;
+                          }
+                        }}
                       >
                         <MaterialCommunityIcons
                           name={icon}
@@ -116,13 +139,11 @@ const Settings = () => {
                         <Text className="text-white text-xl font-pregular ml-5 flex-1">
                           {label}
                         </Text>
-                        {type === "link" && (
-                          <MaterialCommunityIcons
-                            name="chevron-right"
-                            size={18}
-                            color={"#FFFFFF"}
-                          />
-                        )}
+                        <MaterialCommunityIcons
+                          name="chevron-right"
+                          size={18}
+                          color={"#FFFFFF"}
+                        />
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -134,32 +155,36 @@ const Settings = () => {
           }
         })}
 
-        <CButton
-          title={"Log Out"}
-          containerColor={"bg-red-500"}
-          containerStyles={"mt-8"}
-          handlePress={async () => {
-            const r = await logOut();
-            if (r) {
-              router.replace("/");
-              setIsLoggedIn(false);
-              setUser(null);
-            } else {
-              Alert.alert("Error", "Something went wrong");
-            }
-          }}
-        />
+        {isLoggedIn && user && (
+          <>
+            <CButton
+              title={"Log Out"}
+              containerColor={"bg-red-500"}
+              containerStyles={"mt-8"}
+              handlePress={async () => {
+                const r = await logOut();
+                if (r) {
+                  router.replace("/");
+                  setIsLoggedIn(false);
+                  setUser(null);
+                } else {
+                  Alert.alert("Error", "Something went wrong");
+                }
+              }}
+            />
 
-        <CButton
-          title={"Delete Account"}
-          containerStyles={"mt-3 border-2 border-red-500"}
-          containerColor={"bg-primary"}
-          textColor={"text-red-500"}
-          textStyles={"font-pregular"}
-          handlePress={() => {
-            setDeleteAccountModal(true);
-          }}
-        />
+            <CButton
+              title={"Delete Account"}
+              containerStyles={"mt-3 border-2 border-red-500"}
+              containerColor={"bg-primary"}
+              textColor={"text-red-500"}
+              textStyles={"font-pregular"}
+              handlePress={() => {
+                setDeleteAccountModal(true);
+              }}
+            />
+          </>
+        )}
 
         <Modal isOpen={deleteAccountModal}>
           <View className="bg-primary w-full p-4 rounded-md">

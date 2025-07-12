@@ -1,4 +1,11 @@
-import { View, Text, Image, ScrollView, Alert } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+} from "react-native";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, router } from "expo-router";
@@ -6,7 +13,7 @@ import { Link, router } from "expo-router";
 import images from "../../constants/images";
 import FormField from "../../components/FormField";
 import CButton from "../../components/CButton";
-import { MaterialIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { createUser, getCurrentUser } from "../../lib/appwrite";
 import SmallError from "../../components/SmallError";
 import { useGlobalContext } from "../../context/GlobalProvider";
@@ -18,8 +25,6 @@ const SignUp = () => {
     username: "",
     email: "",
     password: "",
-    firstName: "",
-    lastName: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pwdValid, setPwdValid] = useState(true);
@@ -30,9 +35,9 @@ const SignUp = () => {
     if (
       !form.username ||
       !form.email ||
-      !form.password ||
-      !form.firstName ||
-      !form.lastName
+      !form.password
+      // !form.firstName ||
+      // !form.lastName
     ) {
       Alert.alert("Error", "Please fill in all the fields");
       return;
@@ -40,13 +45,7 @@ const SignUp = () => {
 
     setIsSubmitting(true);
     try {
-      const result = await createUser(
-        form.email,
-        form.password,
-        form.username,
-        form.firstName,
-        form.lastName
-      );
+      const result = await createUser(form.email, form.password, form.username);
 
       const user = await getCurrentUser();
 
@@ -65,16 +64,25 @@ const SignUp = () => {
     <SafeAreaView className="bg-primary h-full">
       <ScrollView>
         <View className="w-full justify-center px-4 my-6">
-          <Image
-            source={images.logoHoriz}
-            resizeMode="contain"
-            className="w-[150px] h-[35px]"
-          />
+          <View className="flex-row justify-between items-center">
+            <Image
+              source={images.logoHoriz}
+              resizeMode="contain"
+              className="w-[150px] h-[35px]"
+            />
+            <TouchableOpacity onPress={() => router.replace("/home")}>
+              <MaterialCommunityIcons
+                name="close"
+                color={"#203c56"}
+                size={35}
+              />
+            </TouchableOpacity>
+          </View>
           <Text className="text-3xl text-white font-semibold mt-8">
             Sign up to Mintable
           </Text>
 
-          <View className="flex flex-row gap-5 justify-center items-center">
+          {/* <View className="flex flex-row gap-5 justify-center items-center">
             <FormField
               title="First Name"
               value={form.firstName}
@@ -87,7 +95,7 @@ const SignUp = () => {
               handleChangeText={(e) => setForm({ ...form, lastName: e })}
               otherStyles="mt-7 flex-1"
             />
-          </View>
+          </View> */}
 
           <FormField
             title="Username"

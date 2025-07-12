@@ -5,8 +5,8 @@ import "../global.css";
 import { useEffect } from "react";
 
 import GlobalProvider from "../context/GlobalProvider";
-import NetInfo from "@react-native-community/netinfo";
 import NetworkProvider from "../components/NetworkProvider";
+import ForceUpdateGate from "../components/ForceUpdateGate";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -23,34 +23,27 @@ const RootLayout = () => {
     "Poppins-Thin": require("../assets/fonts/Poppins-Thin.ttf"),
   });
 
-  const [isConnected, setIsConnected] = useState(true);
-
   useEffect(() => {
     if (error) throw error;
     if (fontsLoaded) SplashScreen.hideAsync();
   }, [fontsLoaded, error]);
-
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      setIsConnected(state.isConnected);
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   if (!fontsLoaded && !error) return null;
 
   return (
     <GlobalProvider>
       <NetworkProvider>
-        <Stack>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="(quiz)" options={{ headerShown: false }} />
-          <Stack.Screen name="(settings)" options={{ headerShown: false }} />
-          <Stack.Screen name="(history)" options={{ headerShown: false }} />
-        </Stack>
+        <ForceUpdateGate>
+          <Stack>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(quiz)" options={{ headerShown: false }} />
+            <Stack.Screen name="(settings)" options={{ headerShown: false }} />
+            <Stack.Screen name="(history)" options={{ headerShown: false }} />
+            <Stack.Screen name="(demo)" options={{ headerShown: false }} />
+          </Stack>
+        </ForceUpdateGate>
       </NetworkProvider>
     </GlobalProvider>
   );

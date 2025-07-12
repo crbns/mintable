@@ -18,6 +18,7 @@ import CButton from "../../components/CButton";
 import BudgetContributionGraph from "../../components/BudgetContributionGraph";
 import HomeBudgetList from "../../components/HomeBudgetList";
 import { useGlobalContext } from "../../context/GlobalProvider";
+import { getPreferences } from "../../lib/appwrite";
 
 const Home = () => {
   const { user, isLoggedIn, isLoading } = useGlobalContext();
@@ -55,72 +56,88 @@ const Home = () => {
   );
   const [changeFromLast, setchangeFromLast] = useState(0);
 
-  const loadBarData = async () => {
-    const balanceContributionss = await loadFromCache(
-      CACHE_KEYS.budgetContributions
-    );
+  // const loadBarData = async () => {
+  //   const balanceContributionss = await loadFromCache(
+  //     CACHE_KEYS.budgetContributions
+  //   );
 
-    let parsedContribution;
-    if (!balanceContributionss) {
-      // if no balance contributions in cache, initialize the json
-      const jsonString =
-        '{"values": ["0","0","0","0","0","0","0"],"last": "0","lastDate": "-1"}';
-      parsedContribution = JSON.parse(jsonString);
-      await storeToCache(CACHE_KEYS.budgetContributions, jsonString);
-    } else {
-      parsedContribution = JSON.parse(balanceContributionss);
+  //   let parsedContribution;
+  //   if (!balanceContributionss) {
+  //     // if no balance contributions in cache, initialize the json
+  //     const jsonString =
+  //       '{"values": ["0","0","0","0","0","0","0"],"last": "0","lastDate": "-1"}';
+  //     parsedContribution = JSON.parse(jsonString);
+  //     await storeToCache(CACHE_KEYS.budgetContributions, jsonString);
+  //   } else {
+  //     parsedContribution = JSON.parse(balanceContributionss);
+  //   }
+
+  //   const bCTotal = parsedContribution.values.reduce(
+  //     (partialSum, a) => partialSum + a,
+  //     0
+  //   );
+
+  //   setchangeFromLast(bCTotal - parseInt(parsedContribution.last));
+
+  //   setBarData(
+  //     Array.from({ length: 7 }, (_, index) => ({
+  //       day: index + 1,
+  //       amount: parseInt(parsedContribution.values[index]),
+  //     }))
+  //   );
+
+  //   await updateBudgetListOnNewWeek(parsedContribution);
+  // };
+
+  // const updateBudgetListOnNewWeek = async (parsedData) => {
+  //   const bCTotal = parsedData.values.reduce(
+  //     (partialSum, a) => partialSum + parseInt(a),
+  //     0
+  //   );
+
+  //   if (
+  //     new Date().getDay() === 0 &&
+  //     parseInt(parsedData.lastDate) !== new Date().getDate()
+  //   ) {
+  //     // console.log("replacing old budget list with zeroed out one");
+  //     const next = parsedData;
+
+  //     next.last = bCTotal;
+  //     next.values = ["0", "0", "0", "0", "0", "0", "0"];
+  //     next.lastDate = new Date().getDate();
+  //     // console.log(JSON.stringify(next));
+  //     storeToCache(CACHE_KEYS.budgetContributions, JSON.stringify(next));
+  //     await loadBarData();
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   // loadData(CACHE_KEYS.userData, getCurrentUser);
+  //   loadBarData();
+
+  //   // check if the budget contribtion json needs to be refreshed
+  //   // console.log("checking if exists:" + balanceContributions);
+  //   // if (balanceContributions) {
+  //   //   updateBudgetListOnNewWeek();
+  //   //   loadBarData();
+  //   // }
+  // }, []);
+
+  const [setupComplete, setSetupComplete] = useState(true);
+
+  const checkBudgetSetup = async () => {
+    const response = await getPreferences();
+    // if cache key doesn't exist, call db and store value to cache
+    if (response.budgetOnboardComplete === null) {
+      setSetupComplete(false);
+      response.budgetOnboardComplete = false;
+      await updatePreferences(response);
+    } else if (response.budgetOnboardComplete === true) {
+      setSetupComplete(true);
+    } else if (response.budgetOnboardComplete === false) {
+      setSetupComplete(false);
     }
-
-    const bCTotal = parsedContribution.values.reduce(
-      (partialSum, a) => partialSum + a,
-      0
-    );
-
-    setchangeFromLast(bCTotal - parseInt(parsedContribution.last));
-
-    setBarData(
-      Array.from({ length: 7 }, (_, index) => ({
-        day: index + 1,
-        amount: parseInt(parsedContribution.values[index]),
-      }))
-    );
-
-    await updateBudgetListOnNewWeek(parsedContribution);
   };
-
-  const updateBudgetListOnNewWeek = async (parsedData) => {
-    const bCTotal = parsedData.values.reduce(
-      (partialSum, a) => partialSum + parseInt(a),
-      0
-    );
-
-    if (
-      new Date().getDay() === 0 &&
-      parseInt(parsedData.lastDate) !== new Date().getDate()
-    ) {
-      // console.log("replacing old budget list with zeroed out one");
-      const next = parsedData;
-
-      next.last = bCTotal;
-      next.values = ["0", "0", "0", "0", "0", "0", "0"];
-      next.lastDate = new Date().getDate();
-      // console.log(JSON.stringify(next));
-      storeToCache(CACHE_KEYS.budgetContributions, JSON.stringify(next));
-      await loadBarData();
-    }
-  };
-
-  useEffect(() => {
-    // loadData(CACHE_KEYS.userData, getCurrentUser);
-    loadBarData();
-
-    // check if the budget contribtion json needs to be refreshed
-    // console.log("checking if exists:" + balanceContributions);
-    // if (balanceContributions) {
-    //   updateBudgetListOnNewWeek();
-    //   loadBarData();
-    // }
-  }, []);
 
   useEffect(() => {
     const updateGreeting = () => {
@@ -133,6 +150,7 @@ const Home = () => {
         setGreeting("Good evening");
       }
     };
+    checkBudgetSetup();
     updateGreeting();
   }, []);
 
@@ -156,7 +174,7 @@ const Home = () => {
           <View className="flex-row justify-center mb-2">
             <Text className="text-white font-psemibold text-left text-3xl items-start flex-1">
               {greeting}
-              {isLoggedIn && "\n" + user?.firstName}
+              {/* {isLoggedIn && "\n" + user?.firstName} */}
             </Text>
             <TouchableOpacity
               className="items-end mr-5"
@@ -171,18 +189,19 @@ const Home = () => {
           </View>
           <View className="h-1 bg-alt-100 rounded-full" />
 
-          <View className="flex-1 justify-between">
-            {isLoggedIn ? (
+          <View className="flex-1 justify-between bg-alt-100 rounded-md mt-5 p-5">
+            {isLoggedIn || !setupComplete ? (
               <BudgetContributionGraph />
             ) : (
               <>
-                <Text className="mt-3 font-psemibold text-2xl text-white text-center">
-                  Log in to view your weekly budget contributions.
+                <Text className="font-psemibold text-xl text-white text-center">
+                  Your budget graph will appear here once you've created a
+                  budget.
                 </Text>
                 <CButton
-                  title={"Log In"}
-                  containerStyles={"my-5"}
-                  handlePress={() => router.push("/sign-in")}
+                  title={"Go to Budgets"}
+                  containerStyles={"mt-5"}
+                  handlePress={() => router.push("/budget")}
                 />
               </>
             )}
