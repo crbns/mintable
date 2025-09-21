@@ -71,7 +71,7 @@ const SETTINGS = [
         type: "link",
       },
       {
-        id: "bugReport",
+        id: "giveFeedback",
         icon: "chat-processing",
         label: "Give Feedback",
         type: "redirect",

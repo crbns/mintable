@@ -27,6 +27,7 @@ import RNDateTimePicker from "@react-native-community/datetimepicker";
 import useAppwrite from "../../lib/useAppwrite";
 import {
   createBudget as createBudgetDb,
+  deleteBudget,
   getBudgetByDocId,
   getBudgets,
   getCurrentUser,
@@ -45,6 +46,10 @@ import eventBus from "../../lib/eventBus";
 import { router } from "expo-router";
 import { useGlobalContext } from "../../context/GlobalProvider";
 import LottieView from "lottie-react-native";
+import DrawerModal from "../../components/DrawerModal";
+import EditBudgetDrawerModal from "../../components/EditBudgetDrawerModal";
+import { BottomSheetView } from "@gorhom/bottom-sheet";
+import { events, logEvent } from "../../lib/appsflyer";
 
 const Budget = () => {
   const { user, isLoggedIn } = useGlobalContext();
@@ -170,9 +175,11 @@ const Budget = () => {
         minimumDate={new Date()}
         mode="date"
         onChange={(e, selectedDate) => {
-          const currentDate = selectedDate;
-          setDateTimePickerShown(false);
-          budgetForm.goalTime = currentDate;
+          if (e.type == "set") {
+            const currentDate = selectedDate;
+            setDateTimePickerShown(false);
+            budgetForm.goalTime = currentDate;
+          }
         }}
         textColor="gray"
         accentColor="orange"
@@ -267,6 +274,7 @@ const Budget = () => {
         goal: element.goal,
         start: element.start,
         end: element.end,
+        goalTime: element.goalTime,
       }));
 
     setItems(newItems);
@@ -290,8 +298,9 @@ const Budget = () => {
         color: b.color,
         progress: b.progress,
         goal: b.goal,
-        start: b.start,
+        start: b.started,
         end: b.end,
+        goalTime: b.goalTime,
       }));
 
     setItems(filteredItems);
@@ -335,6 +344,7 @@ const Budget = () => {
         Alert.alert("Error", "Something went wrong");
       } else {
         setIsBudgetOpen(false);
+        logEvent(events.CREATE_BUDGET);
         // Alert.alert(
         //   "Success",
         //   "Be sure to refresh the page to see the changes!"
@@ -435,6 +445,23 @@ const Budget = () => {
     }
   };
 
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const editDrawerModal = useRef(null);
+  const [editDrawerData, setEditDrawerData] = useState(null);
+  const [editModalSelectedId, setEditModalSelectedId] = useState(-1);
+  const [deleteOptionChecked, setDeleteOptionChecked] = useState(false);
+
+  const editBudget = async (item) => {
+    setEditDrawerData(item);
+    editDrawerModal.current?.present();
+    // router.navigate({
+    //   pathname: "/budgets/[budgetId]",
+    //   params: { budgetId: id },
+    // });
+    // setEditModalOpen(true);
+    // setEditModalSelectedId(id);
+  };
+
   const [setupComplete, setSetupComplete] = useState(false);
 
   const checkBudgetSetup = async () => {
@@ -477,11 +504,11 @@ const Budget = () => {
 
   return (
     <SafeAreaView
-      className="bg-primary h-full px-5 pt-5"
+      className="bg-primary h-full  pt-5"
       edges={["right", "top", "left"]}
     >
       <ScrollView
-        className=""
+        className="px-5"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -501,8 +528,18 @@ const Budget = () => {
             resizeMode="contain"
           />
           <Text className="text-white font-psemibold text-2xl flex-1">
-            Budget
+            Your Budgets
           </Text>
+          <TouchableOpacity
+            className="items-end mr-2"
+            onPress={() => router.push("settings")}
+          >
+            <MaterialCommunityIcons
+              name="cog-outline"
+              color={"gray"}
+              size={28}
+            />
+          </TouchableOpacity>
 
           {/* <TouchableOpacity onPress={() => router.push("history")}>
             <MaterialCommunityIcons name="history" size={32} color={"gray"} />
@@ -510,7 +547,7 @@ const Budget = () => {
           {/* TODO: Will be implemented later on */}
         </View>
         <View className="border-2 border-b-4 border-alt-100 p-3 rounded-xl mt-3">
-          <Text className="text-white font-pregular">Virtual Balance</Text>
+          <Text className="text-white font-psemibold">Virtual Balance</Text>
           {refreshing ? (
             <ActivityIndicator />
           ) : (
@@ -624,7 +661,7 @@ const Budget = () => {
           </Text>
         )}
 
-        <View className="mt-5">
+        <View className="mt-3">
           {refreshing ? (
             <ActivityIndicator />
           ) : (
@@ -637,15 +674,19 @@ const Budget = () => {
                 goal={item.goal}
                 start={item.start}
                 end={item.end}
-                buttonDisabled={!isAllocateMode}
-                onPress={() => allocateMode(item.id)}
+                date={item.goalTime}
+                //buttonDisabled={!isAllocateMode} NOT USED
+                onPress={() => {
+                  if (isAllocateMode) {
+                    allocateMode(item.id);
+                  } else {
+                    editBudget(item);
+                  }
+                }}
               />
             ))
           )}
         </View>
-        <Text className="text-gray-500 font-pregular text-center mt-2">
-          Swipe down to refresh page
-        </Text>
 
         {/* <CButton
           title={"another one"}
@@ -675,6 +716,7 @@ const Budget = () => {
           handlePress={() => setIsBudgetOpen(true)}
         />
 
+        {/* Create Budget */}
         <Modal
           isOpen={isBudgetOpen}
           withInput
@@ -755,10 +797,10 @@ const Budget = () => {
                   />
                 ) : (
                   <>
-                    <Text className="text-base text-gray-100 font-pmedium mx-2">
-                      Choose a date
+                    <Text className="text-base text-gray-100 font-pmedium">
+                      Choose a due date
                     </Text>
-                    <View className="flex-1 justify-center">
+                    <View className="flex-1 justify-center items-start">
                       {dateTimeCompoenent()}
                     </View>
                   </>
@@ -774,7 +816,99 @@ const Budget = () => {
             />
           </View>
         </Modal>
+
+        {/* Edit modal */}
+        <Modal
+          isOpen={editModalOpen}
+          onRequestClose={() => {
+            setEditModalOpen(false);
+            setDeleteOptionChecked(false);
+          }}
+        >
+          <View className="bg-primary w-full p-4 rounded-md">
+            <View className="flex-row align-middle items-center">
+              <Text className="flex-1 text-white font-psemibold text-xl px-1">
+                Edit Budget
+              </Text>
+              <TouchableOpacity
+                className="items-end"
+                onPress={() => {
+                  setEditModalOpen(false);
+                  setDeleteOptionChecked(false);
+                }}
+              >
+                <MaterialCommunityIcons name="close" color={"gray"} size={32} />
+              </TouchableOpacity>
+            </View>
+            <View className="flex-row mt-1 items-center justify-evenly">
+              <TouchableOpacity
+                className="items-center justify-center border-2 rounded-md p-2 border-alt-100"
+                activeOpacity={0.8}
+              >
+                <Image
+                  source={images.pencil}
+                  className="w-[50px] h-[50px]"
+                  resizeMode="contain"
+                />
+                <Text className="text-white">Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="items-center justify-center border-2 rounded-md p-2 border-alt-100"
+                activeOpacity={0.8}
+                onPress={() => setDeleteOptionChecked(!deleteOptionChecked)}
+              >
+                <Image
+                  source={images.trash}
+                  className="w-[50px] h-[50px]"
+                  resizeMode="contain"
+                />
+                <Text className="text-white">Delete</Text>
+              </TouchableOpacity>
+            </View>
+            {deleteOptionChecked && (
+              // TODO: could be animated here
+              <View className="mt-2">
+                <Text className="text-white font-psemibold mb-5 pt-2 mt-2 border-t-hairline">
+                  Are you sure?
+                </Text>
+                <View className="flex-row justify-evenly gap-5">
+                  <CButton
+                    title={"Yes"}
+                    containerColor={"flex-1 bg-red-500"}
+                    handlePress={async () => {
+                      const response = await deleteBudget(editModalSelectedId);
+                      if (response == true) {
+                        setEditModalOpen(false);
+                        setDeleteOptionChecked(false);
+                        Alert.alert(
+                          "Success!",
+                          "Successfully deleted your budget"
+                        );
+                        onRefresh();
+                      } else {
+                        Alert.alert("Error", "Something went wrong");
+                      }
+                    }}
+                  />
+                  <CButton
+                    title={"No"}
+                    containerColor={"flex-1 border-2 rounded-md border-alt-100"}
+                    textColor={"text-gray-500"}
+                    handlePress={() => {
+                      setDeleteOptionChecked(false);
+                    }}
+                  />
+                </View>
+              </View>
+            )}
+          </View>
+        </Modal>
       </ScrollView>
+      <EditBudgetDrawerModal
+        ref={editDrawerModal}
+        budget={editDrawerData}
+        requireRefresh={onRefresh}
+      />
     </SafeAreaView>
   );
 };

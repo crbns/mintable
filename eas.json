@@ -6,6 +6,7 @@
   "build": {
     "development": {
       "developmentClient": true,
+      "environment": "development",
       "distribution": "internal",
       "channel": "development",
       "ios": {
@@ -15,6 +16,7 @@
     "simulator": {
       "developmentClient": true,
       "distribution": "internal",
+      "environment": "development",
       "channel": "development",
       "ios": {
         "simulator": true
@@ -22,10 +24,12 @@
     },
     "preview": {
       "distribution": "internal",
+      "environment": "preview",
       "channel": "preview"
     },
     "previewSim": {
       "distribution": "internal",
+      "environment": "preview",
       "channel": "preview",
       "ios": {
         "simulator": true
@@ -33,10 +37,15 @@
     },
     "production": {
       "autoIncrement": true,
+      "environment": "production",
       "channel": "production"
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./mintable-458507-950bac622026.json"
+      }
+    }
   }
 }

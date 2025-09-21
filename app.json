@@ -3,7 +3,7 @@
     "name": "Mintable",
     "slug": "mintable",
     "scheme": "mintable",
-    "version": "1.0.3",
+    "version": "1.0.6",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -22,7 +22,8 @@
         "tinted": "./assets/icons/ios-tinted.png"
       },
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAdvertisingAttributionReportEndpoint": "https://ios-appstack.com"
       }
     },
     "android": {
@@ -30,7 +31,8 @@
         "foregroundImage": "./assets/icons/adaptive-icon.png",
         "backgroundColor": "#0d2b45"
       },
-      "package": "com.isaac.mintable"
+      "package": "com.isaac.mintable",
+      "edgeToEdgeEnabled": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -58,10 +60,23 @@
             "privacyManifestAggregationEnabled": true
           },
           "android": {
-            "enableProguardInReleaseBuilds": true
+            "enableProguardInReleaseBuilds": true,
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35
           }
         }
-      ]
+      ],
+      [
+        "react-native-appsflyer",
+        {}
+      ],
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "This app uses device identifiers to track marketing attribution and app usage."
+        }
+      ],
+      "expo-secure-store"
     ],
     "extra": {
       "router": {

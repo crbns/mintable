@@ -16,6 +16,7 @@ import CButton from "../../components/CButton";
 import { getCurrentUser, signIn } from "../../lib/appwrite";
 import { useGlobalContext } from "../../context/GlobalProvider";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { events, logEvent } from "../../lib/appsflyer";
 
 const SignIn = () => {
   const { setIsLoggedIn, setUser } = useGlobalContext();
@@ -39,6 +40,8 @@ const SignIn = () => {
 
       setUser(user);
       setIsLoggedIn(true);
+
+      await logEvent(events.LOG_IN);
 
       router.replace("/home");
     } catch (error) {

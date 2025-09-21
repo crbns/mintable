@@ -8,6 +8,9 @@ import cap from "../assets/icons/cap.png";
 import home from "../assets/icons/home.png";
 import wallet from "../assets/icons/wallet.png";
 
+import pencil from "../assets/icons/pencil.png";
+import trash from "../assets/icons/trash.png";
+
 export default {
   logo,
   logoSmall,
@@ -17,4 +20,6 @@ export default {
   home,
   wallet,
   onboard2,
+  pencil,
+  trash,
 };

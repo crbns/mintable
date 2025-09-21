@@ -17,6 +17,8 @@ import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { createUser, getCurrentUser } from "../../lib/appwrite";
 import SmallError from "../../components/SmallError";
 import { useGlobalContext } from "../../context/GlobalProvider";
+import { USERNAME_REGEX } from "../../constants/constants";
+import { events, logEvent } from "../../lib/appsflyer";
 
 const SignUp = () => {
   const { setUser, setIsLoggedIn } = useGlobalContext();
@@ -51,6 +53,8 @@ const SignUp = () => {
 
       setUser(user);
       setIsLoggedIn(true);
+
+      logEvent(events.SIGN_UP);
 
       router.replace("/home");
     } catch (error) {
@@ -108,7 +112,7 @@ const SignUp = () => {
             <SmallError text="Username cannot be longer than 20 characters" />
           ) : null}
           {!regUserValid ? (
-            <SmallError text="Username can only contain letters, numbers, and underscores" />
+            <SmallError text="Username can only contain letters, numbers, underscores, and periods." />
           ) : null}
 
           <FormField
@@ -137,7 +141,7 @@ const SignUp = () => {
                 ? setPwdValid(false)
                 : setPwdValid(true);
 
-              /[^a-zA-Z0-9_]/.test(form.username)
+              USERNAME_REGEX.test(form.username)
                 ? setRegUserValid(false)
                 : setRegUserValid(true);
 

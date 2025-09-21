@@ -38,6 +38,12 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# prebuilding
+# builds
 /ios
 /android
+
+# env
+.env*.production
+
+# eas submit
+mintable-458507-950bac622026.json

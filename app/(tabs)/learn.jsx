@@ -114,7 +114,7 @@ const Learn = () => {
         /> */}
         <View className="border-[1px] border-dotted border-alt-100 w-full" />
 
-        <Text className="text-center text-alt-100 font-psemibold text-3xl mt-5">
+        <Text className="text-center text-alt-100 font-psemibold text-2xl mt-5">
           More lessons coming soon!
         </Text>
       </ScrollView>

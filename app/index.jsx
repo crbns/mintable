@@ -1,6 +1,6 @@
 import { View, Text, ScrollView, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 
@@ -8,9 +8,19 @@ import images from "../constants/images";
 import CButton from "../components/CButton";
 import { Redirect, router } from "expo-router";
 import { useGlobalContext } from "../context/GlobalProvider";
+import { requestTrackingPermissionsAsync } from "expo-tracking-transparency";
 
 export default function App() {
   const { isLoading, isLoggedIn } = useGlobalContext();
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await requestTrackingPermissionsAsync();
+      if (status === "granted") {
+        console.log("Yay! I have user permission to track data");
+      }
+    })();
+  }, []);
 
   if (!isLoading && isLoggedIn) return <Redirect href="/home" />;
 

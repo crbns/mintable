@@ -177,7 +177,7 @@ const Home = () => {
               {/* {isLoggedIn && "\n" + user?.firstName} */}
             </Text>
             <TouchableOpacity
-              className="items-end mr-5"
+              className="items-end mr-2"
               onPress={() => router.push("settings")}
             >
               <MaterialCommunityIcons
@@ -194,7 +194,7 @@ const Home = () => {
               <BudgetContributionGraph />
             ) : (
               <>
-                <Text className="font-psemibold text-xl text-white text-center">
+                <Text className="font-psemibold text-md text-white text-center">
                   Your budget graph will appear here once you've created a
                   budget.
                 </Text>

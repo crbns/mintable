@@ -11,7 +11,6 @@ import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CButton from "./CButton";
 import BudgetContainer from "./BudgetContainer";
-import { useSharedValue } from "react-native-reanimated";
 import DropDown from "./DropDown";
 import SmallInfo from "./SmallInfo";
 import FormField from "./FormField";

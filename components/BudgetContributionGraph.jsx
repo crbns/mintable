@@ -17,6 +17,8 @@ const BudgetContributionGraph = () => {
   const [changeFromLast, setChangeFromLast] = useState(0);
   const font = useFont(pregular, 12);
 
+  const [chartFailed, setChartFailed] = useState(false);
+
   const isValidBudgetData = (data) => {
     if (data.version !== BUDGET_CONTRIBUTIONS_JSON_SCHEMA_VERSION) {
       return false;
@@ -116,6 +118,47 @@ const BudgetContributionGraph = () => {
     console.log("sanitized: " + sanitizedValues);
   };
 
+  let chartContent;
+  try {
+    chartContent = (
+      <CartesianChart
+        data={barData}
+        xKey="day"
+        yKeys={["amount"]}
+        domainPadding={{ left: 25, right: 25, top: 0 }}
+        axisOptions={{
+          font,
+          formatXLabel: (value) => {
+            const date = new Date(2023, 0, value);
+            return date.toLocaleString("default", { weekday: "short" });
+          },
+          formatYLabel: (value) => {
+            return "$" + value;
+          },
+          lineWidth: 0,
+          labelColor: "#6b7280",
+        }}
+      >
+        {({ points, chartBounds }) => (
+          <Bar
+            chartBounds={chartBounds}
+            points={points.amount}
+            roundedCorners={{ topLeft: 5, topRight: 5 }}
+          >
+            <LinearGradient
+              start={vec(0, 0)}
+              end={vec(0, 300)}
+              colors={["#ffaa5e", "#ffaa5e60"]}
+            />
+          </Bar>
+        )}
+      </CartesianChart>
+    );
+  } catch (e) {
+    console.error("Chart render failed:", e);
+    setChartFailed(true);
+  }
+
   useEffect(() => {
     const sub = eventBus.addListener("newContribution", (newContrib) => {
       const parsed = JSON.parse(newContrib);
@@ -139,7 +182,19 @@ const BudgetContributionGraph = () => {
   );
 
   if (!font || barData.length === 0) {
-    return <ActivityIndicator />; // Or a loading indicator
+    return <ActivityIndicator />;
+  }
+
+  if (chartFailed) {
+    return (
+      <View
+        style={{ height: 200, justifyContent: "center", alignItems: "center" }}
+      >
+        <Text className="text-gray-400">
+          Unable to load chart. Try again later.
+        </Text>
+      </View>
+    );
   }
 
   return (
@@ -162,43 +217,7 @@ const BudgetContributionGraph = () => {
           color={`${changeFromLast >= 0 ? "#16a34a" : "#dc2626"}`}
         />
       </View>
-      <View style={{ height: 200 }}>
-        <CartesianChart
-          data={barData}
-          xKey="day"
-          yKeys={["amount"]}
-          domainPadding={{ left: 25, right: 25, top: 0 }}
-          axisOptions={{
-            font,
-            formatXLabel: (value) => {
-              const date = new Date(2023, 0, value);
-              return date.toLocaleString("default", { weekday: "short" });
-            },
-            formatYLabel: (value) => {
-              return "$" + value;
-            },
-            lineWidth: 0,
-            labelColor: "#6b7280",
-          }}
-        >
-          {({ points, chartBounds }) => (
-            <Bar
-              chartBounds={chartBounds} // 👈 chartBounds is needed to know how to draw the bars
-              points={points.amount} // 👈 points is an object with a property for each yKey
-              roundedCorners={{
-                topLeft: 5,
-                topRight: 5,
-              }}
-            >
-              <LinearGradient
-                start={vec(0, 0)}
-                end={vec(0, 300)}
-                colors={["#ffaa5e", "#ffaa5e60"]}
-              />
-            </Bar>
-          )}
-        </CartesianChart>
-      </View>
+      <View style={{ height: 200 }}>{chartContent}</View>
     </>
   );
 };
