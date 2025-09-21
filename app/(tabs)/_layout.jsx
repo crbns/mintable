@@ -7,7 +7,11 @@ import images from "../../constants/images";
 const TabIcon = ({ icon, color, name, focused }) => {
   return (
     <View className="flex items-center justify-center gap-1">
-      <View className={`${focused && "border-2 border-secondary rounded-md"}`}>
+      <View
+        className={`border-2 ${
+          focused ? " border-secondary rounded-md" : " border-secondary/0"
+        }`}
+      >
         <Image
           source={icon}
           className="w-[32px] h-[32px]"
@@ -29,15 +33,22 @@ const TabsLayout = () => {
     <>
       <Tabs
         screenOptions={{
+          animation: "shift",
+          transitionSpec: {
+            animation: "spring",
+            config: {
+              duration: 100,
+            },
+          },
           tabBarShowLabel: false,
           tabBarActiveTintColor: "#ffaa5e",
           tabBarInactiveTintColor: "#d08159",
           tabBarStyle: {
             backgroundColor: "#1a3045",
-            borderTopWidth: 10,
-            borderTopColor: "#1a3045",
+            // borderTopWidth: 3,
+            // borderTopColor: "#203c56",
             height: 90,
-            paddingTop: 5,
+            paddingTop: 15,
           },
         }}
       >

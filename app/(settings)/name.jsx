@@ -13,8 +13,11 @@ import CButton from "../../components/CButton";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { updateName } from "../../lib/appwrite";
+import { useGlobalContext } from "../../context/GlobalProvider";
 
 const username = () => {
+  const { user, isLoggedIn } = useGlobalContext();
+
   const [firstNameForm, setFirstNameForm] = useState(null);
   const [lastNameForm, setLastNameForm] = useState(null);
   const [confFirstNameForm, setConfFirstNameForm] = useState(null);
@@ -37,7 +40,7 @@ const username = () => {
       Alert.alert("Error", "Names do not match.");
       return;
     }
-    const res = await updateName(firstNameForm, lastNameForm);
+    const res = await updateName(firstNameForm, lastNameForm, user);
     if (res) {
       router.back();
       Alert.alert("Success", "Name has been sucessfully changed.");

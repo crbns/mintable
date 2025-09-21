@@ -14,6 +14,7 @@ const BudgetContainer = ({
   onPress,
   buttonDisabled,
   noMargin,
+  date,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [timeLeft, setTimeLeft] = useState(timeUntil(end));
@@ -24,24 +25,24 @@ const BudgetContainer = ({
     const targetDate = new Date(isoDate);
     const now = new Date();
 
-    const difference = targetDate.getTime() - now.getTime();
+    // Reset both dates to midnight to avoid partial day issues
+    targetDate.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
 
-    if (difference <= 0) {
-      return "Now!";
-    }
+    const difference = now.getTime() - targetDate.getTime();
+    const daysPassed = Math.floor(difference / (1000 * 60 * 60 * 24));
 
-    // const seconds = Math.floor((difference / 1000) % 60);
-    // const minutes = Math.floor((difference / (1000 * 60)) % 60);
-    // const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-    // math.ceil to round up bc of 23 hour 59 minute 59 second bs
-    const days = Math.ceil(difference / (1000 * 60 * 60 * 24));
-
-    if (days === 1) {
-      return `in 1 Day`;
-    } else if (days !== 0) {
-      return `in ${days} Days`;
-    } else {
+    if (daysPassed === 0) {
       return "Today!";
+    } else if (daysPassed === 1) {
+      return "1 day ago";
+    } else if (daysPassed > 1) {
+      return `${daysPassed} days ago`;
+    } else {
+      // future date
+      return `in ${Math.abs(daysPassed)} day${
+        Math.abs(daysPassed) === 1 ? "" : "s"
+      }`;
     }
   }
 
@@ -49,36 +50,47 @@ const BudgetContainer = ({
     setTimeLeft(timeUntil(end));
   }, [timeUntil(end)]);
 
+  // className={`flex-row ${noMargin ? "" : "mt-3"} ${
+  //           end ? "mb-1" : "mb-5"
+  //         } justify-center items-center ${containerStyles}`}
+
   return (
     <>
-      <TouchableOpacity onPress={onPress} disabled={buttonDisabled}>
+      <TouchableOpacity onPress={onPress} disabled={false}>
         <View
-          className={`flex-row ${noMargin ? "" : "mt-3"} ${
-            end ? "mb-1" : "mb-5"
-          } justify-center items-center ${containerStyles}`}
+          className={`flex-row justify-center items-center mt-2 ${containerStyles}`}
         >
-          <Text className="flex-1 text-white font-pregular text-xl">
+          <Text className="flex-1 text-white font-psemibold text-xl">
             {name ?? "New Budget"}
           </Text>
-          <Text className=" text-white font-pregular text-sm">
-            {"$" + progress + " / $" + goal}
-          </Text>
-          <Text className="text-right text-xl flex-1">{emoji ?? "💰"}</Text>
+
+          {/* <Text className="text-right text-xl flex-1">{emoji ?? "💰"}</Text> */}
         </View>
 
-        {end && (
+        <View className="flex-row my-2 justify-center">
+          <Text className=" text-white font-pregular text-rg">
+            {"$" + progress + " / $" + goal}
+          </Text>
+          {date && (
+            <Text className="flex-1 text-white font-pregular text-right">
+              {timeUntil(date)}
+            </Text>
+          )}
+        </View>
+
+        {/* {end && (
           <Text className="text-white font-pregular text-center mb-3">
             Due: {timeLeft}
           </Text>
-        )}
+        )} */}
         <Progress.Bar
           progress={progressPercent}
           width={null}
           color={color}
-          borderWidth={2}
+          borderWidth={1}
         />
 
-        <View className="border-t-2 border-alt-100 mt-3" />
+        <View className="border-t-2 border-alt-100 mt-2" />
       </TouchableOpacity>
     </>
   );

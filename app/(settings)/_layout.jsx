@@ -31,6 +31,14 @@ const SettingsLayout = () => {
           name="name"
           options={{ headerShown: false, animation: "slide_from_right" }}
         />
+        <Stack.Screen
+          name="bugReport"
+          options={{ headerShown: false, animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="feedback"
+          options={{ headerShown: false, animation: "slide_from_right" }}
+        />
         <StatusBar backgroundColor="#0d2b45" style="light" />
       </Stack>
     </>

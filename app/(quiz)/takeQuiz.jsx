@@ -59,7 +59,7 @@ const TakeQuiz = () => {
     );
   }
 
-  if (data[0] === undefined) {
+  if (data[0] === undefined || data === undefined) {
     return (
       <SafeAreaView className="bg-primary p-5 mt-">
         <View className="h-full items-center justify-center">
@@ -78,59 +78,61 @@ const TakeQuiz = () => {
 
   return (
     <SafeAreaView className="bg-primary h-full">
-      <TouchableOpacity className="p-5" onPress={() => router.back()}>
-        <MaterialCommunityIcons name="close" color={"#203c56"} size={50} />
-      </TouchableOpacity>
-      {index < length ? (
-        <>
-          <View className="flex flex-col h-4/5  px-4">
-            <View className="flex-1 w-full flex items-center justify-center">
-              <Text className="text-white font-psemibold text-4xl text-center">
-                {data[index].question_text}
-              </Text>
+      <View className="">
+        <TouchableOpacity className="p-5" onPress={() => router.back()}>
+          <MaterialCommunityIcons name="close" color={"#203c56"} size={50} />
+        </TouchableOpacity>
+        {index < length ? (
+          <>
+            <View className="flex flex-col h-4/5  px-4">
+              <View className="flex-1 w-full flex items-center justify-center">
+                <Text className="text-white font-psemibold text-4xl text-center">
+                  {data[index].question_text}
+                </Text>
+              </View>
+              <MultiChoice
+                titles={[
+                  data[index].answers[0],
+                  data[index].answers[1],
+                  data[index].answers[2],
+                  data[index].answers[3],
+                ]}
+                correctIndex={data[index].correct_answer_index}
+                onCorrect={() => setScore(score + 1)}
+                onIncorrect={() => console.log("wrong")}
+                showCorrect={true}
+                containerStyles={"flex-1"}
+                answered={answered}
+                setAnswered={setAnswered}
+              />
             </View>
-            <MultiChoice
-              titles={[
-                data[index].answers[0],
-                data[index].answers[1],
-                data[index].answers[2],
-                data[index].answers[3],
-              ]}
-              correctIndex={data[index].correct_answer_index}
-              onCorrect={() => setScore(score + 1)}
-              onIncorrect={() => console.log("wrong")}
-              showCorrect={true}
-              containerStyles={"flex-1"}
-              answered={answered}
-              setAnswered={setAnswered}
+            <CButton
+              title={"Next"}
+              containerStyles={"mt-8"}
+              handlePress={() => {
+                setIndex(index + 1);
+                setAnswered(false);
+              }}
+            />
+          </>
+        ) : (
+          <View className="">
+            <Text className="text-white text-center font-pregular text-2xl">
+              You scored
+            </Text>
+            <Text className="text-secondary text-center font-psemibold text-4xl mt-2">
+              {score} / {length}
+            </Text>
+            <CButton
+              title={"Go Back"}
+              containerStyles={""}
+              handlePress={() => {
+                router.back();
+              }}
             />
           </View>
-          <CButton
-            title={"Next"}
-            containerStyles={"mt-8"}
-            handlePress={() => {
-              setIndex(index + 1);
-              setAnswered(false);
-            }}
-          />
-        </>
-      ) : (
-        <View className="">
-          <Text className="text-white text-center font-pregular text-2xl">
-            You scored
-          </Text>
-          <Text className="text-secondary text-center font-psemibold text-4xl mt-2">
-            {score} / {length}
-          </Text>
-          <CButton
-            title={"Go Back"}
-            containerStyles={""}
-            handlePress={() => {
-              router.back();
-            }}
-          />
-        </View>
-      )}
+        )}
+      </View>
     </SafeAreaView>
   );
 };

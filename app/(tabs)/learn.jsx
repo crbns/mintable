@@ -18,7 +18,7 @@ const Learn = () => {
 
   return (
     <SafeAreaView
-      className="bg-primary h-full px-5 pt-5"
+      className="bg-primary h-full pt-5"
       edges={["right", "top", "left"]}
     >
       {/* <View className="p-5 flex-row bg-primary border-alt-100 border-b-2">
@@ -37,13 +37,15 @@ const Learn = () => {
         </View>
       </View> */}
 
-      <View className="flex-row flex-1 items-center gap-2 border-alt-100 border-b-2">
-        <Image
-          source={images.logoSmall}
-          className="w-[60px] h-[30px]"
-          resizeMode="contain"
-        />
-        <Text className="text-white font-psemibold text-2xl">Learn</Text>
+      <View className="flex-row gap-2 px-5">
+        <View className="flex-row gap-2 items-center">
+          <Image
+            source={images.logoSmall}
+            className="w-[60px] h-[30px]"
+            resizeMode="contain"
+          />
+          <Text className="text-white font-psemibold text-2xl">Learn</Text>
+        </View>
         {/* <View className="flex-row ml-5 p-3 border-alt-100 border-2 border-b-4 rounded-xl items-center justify-center flex-1">
           <MaterialCommunityIcons name="heart" color="red" size={25} />
           <Text className="text-white font-pregular px-2 text-xl">1000</Text>
@@ -51,7 +53,8 @@ const Learn = () => {
           <Text className="text-white font-pregular px-2 text-xl">1000</Text>
         </View> */}
       </View>
-      <ScrollView className="p-5">
+      <View className="my-5 border-2 border-alt-100 rounded-md" />
+      <ScrollView className="w-full px-5">
         <View className="justify-center">
           <Text className="text-white font-psemibold text-left text-4xl">
             Budgeting
@@ -111,7 +114,7 @@ const Learn = () => {
         /> */}
         <View className="border-[1px] border-dotted border-alt-100 w-full" />
 
-        <Text className="text-center text-alt-100 font-psemibold text-3xl mt-5">
+        <Text className="text-center text-alt-100 font-psemibold text-2xl mt-5">
           More lessons coming soon!
         </Text>
       </ScrollView>

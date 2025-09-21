@@ -1,6 +1,6 @@
 import { View, Text, ScrollView, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 
@@ -8,9 +8,19 @@ import images from "../constants/images";
 import CButton from "../components/CButton";
 import { Redirect, router } from "expo-router";
 import { useGlobalContext } from "../context/GlobalProvider";
+import { requestTrackingPermissionsAsync } from "expo-tracking-transparency";
 
 export default function App() {
   const { isLoading, isLoggedIn } = useGlobalContext();
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await requestTrackingPermissionsAsync();
+      if (status === "granted") {
+        console.log("Yay! I have user permission to track data");
+      }
+    })();
+  }, []);
 
   if (!isLoading && isLoggedIn) return <Redirect href="/home" />;
 
@@ -24,12 +34,9 @@ export default function App() {
             resizeMode="contain"
           />
 
-          <Text className="mt-5 text-white font-bold">
-            image carousel at some point here
-          </Text>
           <Image
-            source={images.onboard1}
-            className="w-[150px] h-[300px]"
+            source={images.onboard2}
+            className="w-full h-[300px]"
             resizeMode="contain"
           />
 
@@ -45,8 +52,8 @@ export default function App() {
         </View>
         <View className="flex-1 justify-end items-center p-4">
           <CButton
-            title={"Continue with email"}
-            handlePress={() => router.push("/sign-in")}
+            title={"Get Started"}
+            handlePress={() => router.push("/home")}
             containerStyles={"w-full mt-7"}
           />
         </View>

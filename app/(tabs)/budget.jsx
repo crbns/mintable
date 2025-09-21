@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
   Image,
 } from "react-native";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import BudgetContainer from "../../components/BudgetContainer";
 import CButton from "../../components/CButton";
@@ -27,6 +27,8 @@ import RNDateTimePicker from "@react-native-community/datetimepicker";
 import useAppwrite from "../../lib/useAppwrite";
 import {
   createBudget as createBudgetDb,
+  deleteBudget,
+  getBudgetByDocId,
   getBudgets,
   getCurrentUser,
   getPreferences,
@@ -42,8 +44,50 @@ import BudgetSetup from "../../components/BudgetSetup";
 import { loadFromCache, storeToCache, CACHE_KEYS } from "../../lib/cacheUtil";
 import eventBus from "../../lib/eventBus";
 import { router } from "expo-router";
+import { useGlobalContext } from "../../context/GlobalProvider";
+import LottieView from "lottie-react-native";
+import DrawerModal from "../../components/DrawerModal";
+import EditBudgetDrawerModal from "../../components/EditBudgetDrawerModal";
+import { BottomSheetView } from "@gorhom/bottom-sheet";
+import { events, logEvent } from "../../lib/appsflyer";
 
 const Budget = () => {
+  const { user, isLoggedIn } = useGlobalContext();
+
+  if (!isLoggedIn) {
+    return (
+      <SafeAreaView
+        className="bg-primary h-full px-5 pt-5"
+        edges={["right", "top", "left"]}
+      >
+        <View className="flex-1 justify-between">
+          <View className="flex-1 justify-center mx-5">
+            <Text className="font-psemibold text-center text-2xl text-white">
+              Log in to Mintable to create budgets.
+            </Text>
+            <Text className="font-pregular text-center text-rg text-gray-500 mt-5">
+              We ask you to log in to securely save and sync your budget data
+              across devices. We never share your information.
+            </Text>
+          </View>
+          <View className="mb-5">
+            <CButton
+              title={"Log In"}
+              handlePress={() => router.push("/sign-in")}
+            />
+            <CButton
+              title={"Try as Guest"}
+              containerStyles={"mt-3 border-2 border-gray-600"}
+              containerColor={"bg-primary"}
+              textColor={"text-gray-600"}
+              handlePress={() => router.push("/budgetDemo")}
+            />
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   const [progress, setProgress] = useState(0);
   const [virtualBalance, setVirtualBalance] = useState(0);
   const [items, setItems] = useState([]);
@@ -131,9 +175,11 @@ const Budget = () => {
         minimumDate={new Date()}
         mode="date"
         onChange={(e, selectedDate) => {
-          const currentDate = selectedDate;
-          setDateTimePickerShown(false);
-          budgetForm.goalTime = currentDate;
+          if (e.type == "set") {
+            const currentDate = selectedDate;
+            setDateTimePickerShown(false);
+            budgetForm.goalTime = currentDate;
+          }
         }}
         textColor="gray"
         accentColor="orange"
@@ -189,7 +235,7 @@ const Budget = () => {
     setItems(items.filter((item) => item.id !== id));
   };
 
-  const { data: budgets, refetch } = useAppwrite(getBudgets);
+  const { data: budgets, refetch } = useAppwrite(getBudgets, user);
   // const { data: vBalance, vBRefetch } = useAppwrite(getVirtualBalance);
 
   const [refreshing, setRefreshing] = useState(false);
@@ -197,10 +243,10 @@ const Budget = () => {
   const onFirstRefresh = async () => {
     setRefreshing(true);
 
-    const budgetData = await getBudgets();
+    const budgetData = await getBudgets(user);
     // await vBRefetch(); not sure why its hanging on this
     // temporary solution
-    const vBal = await getVirtualBalance();
+    const vBal = await getVirtualBalance(user);
 
     setItems(() => []);
 
@@ -217,7 +263,7 @@ const Budget = () => {
 
     const newItems = budgetData
       .filter(function (element) {
-        console.log(element.progress + "," + element.goal);
+        // console.log(element.progress + "," + element.goal);
         return element.progress < element.goal;
       })
       .map((element) => ({
@@ -228,13 +274,10 @@ const Budget = () => {
         goal: element.goal,
         start: element.start,
         end: element.end,
+        goalTime: element.goalTime,
       }));
 
     setItems(newItems);
-
-    // console.log(budgets);
-    // console.log(newItems);
-    // console.log(vBal[0].balance);
 
     setVirtualBalance(vBal[0].balance);
 
@@ -244,45 +287,23 @@ const Budget = () => {
   const onRefresh = async () => {
     setRefreshing(true);
 
-    await refetch();
-    // await vBRefetch(); not sure why its hanging on this
-    // temporary solution
-    const vBal = await getVirtualBalance();
+    const freshBudgets = await refetch(user);
+    const vBal = await getVirtualBalance(user);
 
-    setItems(() => []);
-
-    // add each budget to items
-    // const newItems = budgets.map((element) => ({
-    //   id: element.$id,
-    //   name: element.title,
-    //   color: element.color,
-    //   progress: element.progress,
-    //   goal: element.goal,
-    //   start: element.start,
-    //   end: element.end,
-    // }));
-
-    const newItems = budgets
-      .filter(function (element) {
-        console.log(element.progress + "," + element.goal);
-        return element.progress < element.goal;
-      })
-      .map((element) => ({
-        id: element.$id,
-        name: element.title,
-        color: element.color,
-        progress: element.progress,
-        goal: element.goal,
-        start: element.start,
-        end: element.end,
+    const filteredItems = freshBudgets
+      .filter((b) => b.progress < b.goal)
+      .map((b) => ({
+        id: b.$id,
+        name: b.title,
+        color: b.color,
+        progress: b.progress,
+        goal: b.goal,
+        start: b.started,
+        end: b.end,
+        goalTime: b.goalTime,
       }));
 
-    setItems(newItems);
-
-    // console.log(budgets);
-    // console.log(newItems);
-    // console.log(vBal[0].balance);
-
+    setItems(filteredItems);
     setVirtualBalance(vBal[0].balance);
 
     setRefreshing(false);
@@ -298,13 +319,15 @@ const Budget = () => {
       Alert.alert("Error", "Please fill out all fields");
       return;
     }
-    if (!budgetForm.color) {
-      budgetForm.color = colorDropdownValue;
-    }
+
+    budgetForm.color = colorDropdownValue;
+
     setCreateBudgetLoading(true);
 
     try {
-      const currentUser = await getCurrentUser();
+      // const currentUser = await getCurrentUser();
+
+      const currentUser = user;
 
       const result = await createBudgetDb(
         budgetForm.title,
@@ -321,8 +344,15 @@ const Budget = () => {
         Alert.alert("Error", "Something went wrong");
       } else {
         setIsBudgetOpen(false);
+        logEvent(events.CREATE_BUDGET);
+        // Alert.alert(
+        //   "Success",
+        //   "Be sure to refresh the page to see the changes!"
+        // );
       }
-      await onRefresh();
+      setTimeout(() => {
+        onRefresh();
+      }, 1000);
     } catch (error) {
       Alert.alert("Error", "Something went wrong");
       console.error(error);
@@ -336,44 +366,40 @@ const Budget = () => {
   const [isAllocateMode, setIsAllocateMode] = useState(false);
 
   // called when budget is selected in allocate mode
-  const allocateMode = async (id, progress, goal) => {
-    const newProgress = progress + allocateAmount;
+  const allocateMode = async (id) => {
+    if (items.length === 0) {
+      Alert.alert(
+        "Error",
+        "You need to have at least one budget to allocate money to!"
+      );
+      setIsAllocateMode(false);
+      // reset allocate amount saving myself from future bugs
+      setAllocateAmount(0);
+      return;
+    }
+
+    // get budget from db instead of relying on possibly outdated ui data
+    const budgetFromDb = await getBudgetByDocId(user, id);
+    // update progress and goal accoring to databse
+    const progress = budgetFromDb.progress;
+    const goal = budgetFromDb.goal;
+
+    let newProgress = progress + allocateAmount;
     let excessAllocated = false;
+    let amountToSubtract = allocateAmount;
     try {
-      if (progress + allocateAmount > goal) {
+      if (progress + amountToSubtract > goal) {
         // excess money, give it back to the user
         excessAllocated = true;
-        setAllocateAmount(allocateAmount - (progress + allocateAmount));
+        amountToSubtract = goal - progress;
         newProgress = goal;
       }
 
       const result = await updateBudget(id, newProgress);
       // edit amount to allocate
-      const newVB = await updateVirtualBalance(virtualBalance - allocateAmount);
-
-      // upload current progress to cache
-
-      // if the key doesnt return anything, initialize the json string
-      if ((await loadFromCache(CACHE_KEYS.budgetContributions)) === null) {
-        const jsonString =
-          '{"values": ["0","0","0","0","0","0","0"],"last": "0"}';
-        storeToCache(CACHE_KEYS.budgetContributions, jsonString);
-      }
-
-      const today = new Date().getDay();
-
-      const budgetContributions = JSON.parse(
-        await loadFromCache(CACHE_KEYS.budgetContributions)
+      const newVB = await updateVirtualBalance(
+        virtualBalance - amountToSubtract
       );
-      const before = parseInt(budgetContributions.values[today]);
-      const newAmount = before + allocateAmount;
-      budgetContributions.values[today] = newAmount.toString();
-      const budgetContributionsString = JSON.stringify(budgetContributions);
-      await storeToCache(
-        CACHE_KEYS.budgetContributions,
-        budgetContributionsString
-      );
-      eventBus.emit("newContribution", budgetContributionsString);
 
       if (excessAllocated) {
         Alert.alert(
@@ -384,6 +410,30 @@ const Budget = () => {
 
       if (!result) {
         Alert.alert("Error", "Something went wrong");
+      } else {
+        // update budget contribution grpah
+        const today = new Date().getDay();
+
+        const budgetContributions = JSON.parse(
+          await loadFromCache(CACHE_KEYS.budgetContributions)
+        );
+        const before = parseInt(budgetContributions.values[today]);
+        const newAmount = before + amountToSubtract;
+        budgetContributions.values[today] = newAmount.toString();
+        const budgetContributionsString = JSON.stringify(budgetContributions);
+        await storeToCache(
+          CACHE_KEYS.budgetContributions,
+          budgetContributionsString
+        );
+        eventBus.emit("newContribution", budgetContributionsString);
+        // Alert.alert(
+        //   "Success",
+        //   "Be sure to refresh the page to see the changes!"
+        // );
+
+        setTimeout(() => {
+          onRefresh();
+        }, 1);
       }
     } catch (error) {
       Alert.alert("Error", "Something went wrong");
@@ -393,6 +443,23 @@ const Budget = () => {
       // reset allocate amount saving myself from future bugs
       setAllocateAmount(0);
     }
+  };
+
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const editDrawerModal = useRef(null);
+  const [editDrawerData, setEditDrawerData] = useState(null);
+  const [editModalSelectedId, setEditModalSelectedId] = useState(-1);
+  const [deleteOptionChecked, setDeleteOptionChecked] = useState(false);
+
+  const editBudget = async (item) => {
+    setEditDrawerData(item);
+    editDrawerModal.current?.present();
+    // router.navigate({
+    //   pathname: "/budgets/[budgetId]",
+    //   params: { budgetId: id },
+    // });
+    // setEditModalOpen(true);
+    // setEditModalSelectedId(id);
   };
 
   const [setupComplete, setSetupComplete] = useState(false);
@@ -420,17 +487,28 @@ const Budget = () => {
     onFirstRefresh();
   }, []);
 
+  useEffect(() => {
+    onFirstRefresh();
+  }, [setupComplete]);
+
+  const setSetupCompleteTrue = () => {
+    setSetupComplete(true);
+  };
+
+  // animation refs
+  const selectBudgetAnimationRef = useRef(null);
+
   if (!setupComplete) {
-    return <BudgetSetup />;
+    return <BudgetSetup update={setSetupCompleteTrue} />;
   }
 
   return (
     <SafeAreaView
-      className="bg-primary h-full px-5 pt-5"
+      className="bg-primary h-full  pt-5"
       edges={["right", "top", "left"]}
     >
       <ScrollView
-        className=""
+        className="px-5"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -438,7 +516,7 @@ const Budget = () => {
               setRefreshing(true);
               setTimeout(() => {
                 onRefresh();
-              }, 3000);
+              }, 100);
             }}
           />
         }
@@ -450,8 +528,18 @@ const Budget = () => {
             resizeMode="contain"
           />
           <Text className="text-white font-psemibold text-2xl flex-1">
-            Budget
+            Your Budgets
           </Text>
+          <TouchableOpacity
+            className="items-end mr-2"
+            onPress={() => router.push("settings")}
+          >
+            <MaterialCommunityIcons
+              name="cog-outline"
+              color={"gray"}
+              size={28}
+            />
+          </TouchableOpacity>
 
           {/* <TouchableOpacity onPress={() => router.push("history")}>
             <MaterialCommunityIcons name="history" size={32} color={"gray"} />
@@ -459,7 +547,7 @@ const Budget = () => {
           {/* TODO: Will be implemented later on */}
         </View>
         <View className="border-2 border-b-4 border-alt-100 p-3 rounded-xl mt-3">
-          <Text className="text-white font-pregular">Virtual Balance</Text>
+          <Text className="text-white font-psemibold">Virtual Balance</Text>
           {refreshing ? (
             <ActivityIndicator />
           ) : (
@@ -472,7 +560,16 @@ const Budget = () => {
             containerColor={"bg-alt-100"}
             textColor={"text-white"}
             textWeight={"font-pregular"}
-            handlePress={() => setAllocateModalOpen(true)}
+            handlePress={() => {
+              if (items.length === 0) {
+                Alert.alert(
+                  "Error",
+                  "You need to have at least one budget to allocate money to!"
+                );
+              } else if (!isAllocateMode) {
+                setAllocateModalOpen(true);
+              }
+            }}
           />
         </View>
 
@@ -484,11 +581,14 @@ const Budget = () => {
           <View className="bg-primary w-full p-4 rounded-md">
             <View className="flex-row align-middle items-center">
               <Text className="flex-1 text-white font-psemibold text-xl px-1">
-                Create Budget
+                Allocate Money
               </Text>
               <TouchableOpacity
                 className="items-end"
-                onPress={() => setAllocateModalOpen(false)}
+                onPress={() => {
+                  setAllocateModalOpen(false);
+                  setIsAllocateMode(false);
+                }}
               >
                 <MaterialCommunityIcons name="close" color={"gray"} size={32} />
               </TouchableOpacity>
@@ -528,15 +628,40 @@ const Budget = () => {
               containerStyles={"mt-3"}
               handlePress={() => {
                 if (virtualBalance - allocateAmount >= 0) {
-                  setAllocateModalOpen(false);
+                  selectBudgetAnimationRef.current?.play();
+                  setTimeout(() => {
+                    setAllocateModalOpen(false);
+                  }, 1000);
                   setIsAllocateMode(true);
                 }
               }}
             />
+
+            <LottieView
+              source={require("../../assets/animations/coins_explode.json")}
+              ref={selectBudgetAnimationRef}
+              style={{
+                width: 200,
+                height: 200,
+                position: "absolute",
+                bottom: -60,
+                alignSelf: "center",
+                zIndex: 10,
+                pointerEvents: "none",
+              }}
+              autoPlay={false}
+              loop={false}
+            />
           </View>
         </Modal>
 
-        <View className="mt-5">
+        {isAllocateMode && (
+          <Text className="mt-5 text-white font-psemibold">
+            Click on a budget to allocate your money!
+          </Text>
+        )}
+
+        <View className="mt-3">
           {refreshing ? (
             <ActivityIndicator />
           ) : (
@@ -549,8 +674,15 @@ const Budget = () => {
                 goal={item.goal}
                 start={item.start}
                 end={item.end}
-                buttonDisabled={!isAllocateMode}
-                onPress={() => allocateMode(item.id, item.progress, item.goal)}
+                date={item.goalTime}
+                //buttonDisabled={!isAllocateMode} NOT USED
+                onPress={() => {
+                  if (isAllocateMode) {
+                    allocateMode(item.id);
+                  } else {
+                    editBudget(item);
+                  }
+                }}
               />
             ))
           )}
@@ -580,10 +712,11 @@ const Budget = () => {
         <IconButton
           iconName={"plus"}
           containerColor={"bg-alt-100"}
-          containerStyles={"mt-3"}
+          containerStyles={"mt-3 mb-10"}
           handlePress={() => setIsBudgetOpen(true)}
         />
 
+        {/* Create Budget */}
         <Modal
           isOpen={isBudgetOpen}
           withInput
@@ -664,10 +797,10 @@ const Budget = () => {
                   />
                 ) : (
                   <>
-                    <Text className="text-base text-gray-100 font-pmedium mx-2">
-                      Choose a date
+                    <Text className="text-base text-gray-100 font-pmedium">
+                      Choose a due date
                     </Text>
-                    <View className="flex-1 justify-center">
+                    <View className="flex-1 justify-center items-start">
                       {dateTimeCompoenent()}
                     </View>
                   </>
@@ -683,7 +816,99 @@ const Budget = () => {
             />
           </View>
         </Modal>
+
+        {/* Edit modal */}
+        <Modal
+          isOpen={editModalOpen}
+          onRequestClose={() => {
+            setEditModalOpen(false);
+            setDeleteOptionChecked(false);
+          }}
+        >
+          <View className="bg-primary w-full p-4 rounded-md">
+            <View className="flex-row align-middle items-center">
+              <Text className="flex-1 text-white font-psemibold text-xl px-1">
+                Edit Budget
+              </Text>
+              <TouchableOpacity
+                className="items-end"
+                onPress={() => {
+                  setEditModalOpen(false);
+                  setDeleteOptionChecked(false);
+                }}
+              >
+                <MaterialCommunityIcons name="close" color={"gray"} size={32} />
+              </TouchableOpacity>
+            </View>
+            <View className="flex-row mt-1 items-center justify-evenly">
+              <TouchableOpacity
+                className="items-center justify-center border-2 rounded-md p-2 border-alt-100"
+                activeOpacity={0.8}
+              >
+                <Image
+                  source={images.pencil}
+                  className="w-[50px] h-[50px]"
+                  resizeMode="contain"
+                />
+                <Text className="text-white">Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="items-center justify-center border-2 rounded-md p-2 border-alt-100"
+                activeOpacity={0.8}
+                onPress={() => setDeleteOptionChecked(!deleteOptionChecked)}
+              >
+                <Image
+                  source={images.trash}
+                  className="w-[50px] h-[50px]"
+                  resizeMode="contain"
+                />
+                <Text className="text-white">Delete</Text>
+              </TouchableOpacity>
+            </View>
+            {deleteOptionChecked && (
+              // TODO: could be animated here
+              <View className="mt-2">
+                <Text className="text-white font-psemibold mb-5 pt-2 mt-2 border-t-hairline">
+                  Are you sure?
+                </Text>
+                <View className="flex-row justify-evenly gap-5">
+                  <CButton
+                    title={"Yes"}
+                    containerColor={"flex-1 bg-red-500"}
+                    handlePress={async () => {
+                      const response = await deleteBudget(editModalSelectedId);
+                      if (response == true) {
+                        setEditModalOpen(false);
+                        setDeleteOptionChecked(false);
+                        Alert.alert(
+                          "Success!",
+                          "Successfully deleted your budget"
+                        );
+                        onRefresh();
+                      } else {
+                        Alert.alert("Error", "Something went wrong");
+                      }
+                    }}
+                  />
+                  <CButton
+                    title={"No"}
+                    containerColor={"flex-1 border-2 rounded-md border-alt-100"}
+                    textColor={"text-gray-500"}
+                    handlePress={() => {
+                      setDeleteOptionChecked(false);
+                    }}
+                  />
+                </View>
+              </View>
+            )}
+          </View>
+        </Modal>
       </ScrollView>
+      <EditBudgetDrawerModal
+        ref={editDrawerModal}
+        budget={editDrawerData}
+        requireRefresh={onRefresh}
+      />
     </SafeAreaView>
   );
 };

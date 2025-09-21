@@ -31,7 +31,11 @@ const DropDown = ({
           backgroundColor: "#203c56",
           borderWidth: 0,
         }}
-        style={{ backgroundColor: "#203c56", borderWidth: 0 }}
+        style={{
+          backgroundColor: "#203c56",
+          borderWidth: 0,
+          borderRadius: 6,
+        }}
         labelStyle={{ color: "#ffffff" }}
         listItemContainerStyle={{
           borderTopWidth: 1,
@@ -39,7 +43,7 @@ const DropDown = ({
         }}
         textStyle={{
           color: "#ffffff",
-          fontFamily: "Poppins-SemiBold",
+          fontFamily: "Poppins-Regular",
           paddingLeft: 4,
         }}
         arrowIconStyle={{ tintColor: "#7b7b8b" }}
