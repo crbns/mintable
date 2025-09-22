@@ -91,7 +91,7 @@ const SignIn = () => {
             title="Sign In"
             handlePress={submit}
             containerStyles="mt-20"
-            isLoading={isSubmitting}
+            isWorking={isSubmitting}
           />
 
           <View className="justify-center pt-5 flex-row gap-2">

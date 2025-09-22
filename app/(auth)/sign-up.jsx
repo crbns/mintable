@@ -104,7 +104,9 @@ const SignUp = () => {
           <FormField
             title="Username"
             value={form.username}
-            handleChangeText={(e) => setForm({ ...form, username: e })}
+            handleChangeText={(e) => {
+              setForm({ ...form, username: e });
+            }}
             otherStyles="mt-3"
           />
 
@@ -118,7 +120,9 @@ const SignUp = () => {
           <FormField
             title="Email"
             value={form.email}
-            handleChangeText={(e) => setForm({ ...form, email: e })}
+            handleChangeText={(e) => {
+              setForm({ ...form, email: e });
+            }}
             otherStyles="mt-3"
             keyboardType="email-address"
           />
@@ -131,27 +135,30 @@ const SignUp = () => {
           />
 
           {!pwdValid ? (
-            <SmallError text="Password must contain at least 5 characters" />
+            <SmallError text="Password must be least 8 characters" />
           ) : null}
 
           <CButton
             title="Sign Up"
             handlePress={() => {
-              form.password.length <= 4
-                ? setPwdValid(false)
-                : setPwdValid(true);
+              let pwdValid_,
+                userValid_,
+                regUserValid_ = false;
+              pwdValid_ =
+                !(form.password.length < 8) || !(form.password.length > 256);
 
-              USERNAME_REGEX.test(form.username)
-                ? setRegUserValid(false)
-                : setRegUserValid(true);
+              regUserValid_ = USERNAME_REGEX.test(form.username);
 
-              form.username.length > 20
-                ? setUserValid(false)
-                : setUserValid(true);
-              if (pwdValid && userValid && regUserValid) submit();
+              userValid_ = !(form.username.length > 20);
+
+              setPwdValid(pwdValid_);
+              setUserValid(userValid_);
+              setRegUserValid(regUserValid_);
+
+              if (pwdValid_ && userValid_ && regUserValid_) submit();
             }}
             containerStyles="mt-20"
-            isLoading={isSubmitting}
+            isWorking={isSubmitting}
           />
 
           <View className="justify-center pt-5 flex-row gap-2">
