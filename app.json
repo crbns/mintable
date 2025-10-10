@@ -16,11 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.isaac.mintable",
-      "icon": {
-        "dark": "./assets/icons/ios-dark.png",
-        "light": "./assets/icons/ios-light.png",
-        "tinted": "./assets/icons/ios-tinted.png"
-      },
+      "icon": "./assets/icons/appicon.icon",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSAdvertisingAttributionReportEndpoint": "https://ios-appstack.com"
@@ -66,10 +62,7 @@
           }
         }
       ],
-      [
-        "react-native-appsflyer",
-        {}
-      ],
+      ["react-native-appsflyer", {}],
       [
         "expo-tracking-transparency",
         {
