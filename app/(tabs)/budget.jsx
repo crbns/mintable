@@ -60,8 +60,8 @@ const Budget = () => {
         className="bg-primary h-full px-5 pt-5"
         edges={["right", "top", "left"]}
       >
-        <View className="flex-1 justify-between">
-          <View className="flex-1 justify-center mx-5">
+        <View className="flex-1 justify-center items-center gap-10">
+          <View>
             <Text className="font-psemibold text-center text-2xl text-white">
               Log in to Mintable to create budgets.
             </Text>
@@ -70,7 +70,7 @@ const Budget = () => {
               across devices. We never share your information.
             </Text>
           </View>
-          <View className="mb-5">
+          <View className="w-full">
             <CButton
               title={"Log In"}
               handlePress={() => router.push("/sign-in")}
