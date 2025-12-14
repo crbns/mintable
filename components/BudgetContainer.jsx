@@ -56,7 +56,7 @@ const BudgetContainer = ({
 
   return (
     <>
-      <TouchableOpacity onPress={onPress} disabled={false}>
+      <TouchableOpacity onPress={onPress}>
         <View
           className={`flex-row justify-center items-center mt-2 ${containerStyles}`}
         >

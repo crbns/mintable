@@ -722,56 +722,59 @@ const Budget = () => {
           withInput
           onRequestClose={() => setIsBudgetOpen(false)}
         >
-          <View className="bg-primary w-full p-4 rounded-xl">
-            <View className="flex-row align-middle items-center">
-              <Text className="flex-1 text-white font-psemibold text-xl px-1">
+          <View className="flex align-center pb-10 w-full">
+            <View className="items-center justify-center relative flex-row">
+              <Text className="font-psemibold text-white text-xl text-center">
                 Create Budget
               </Text>
               <TouchableOpacity
-                className="items-end"
+                className="absolute right-4"
                 onPress={() => setIsBudgetOpen(false)}
               >
-                <MaterialCommunityIcons name="close" color={"gray"} size={32} />
+                <MaterialCommunityIcons name="close" size={22} color={"gray"} />
               </TouchableOpacity>
             </View>
 
-            <FormField
-              title="Title"
-              handleChangeText={(e) =>
-                setBudgetForm({ ...budgetForm, title: e })
-              }
-              otherStyles={"my-1"}
-              placeholder={"Give it a title"}
-            />
+            <View className="bg-primary w-full pt-4 px-4 rounded-xl ">
+              <FormField
+                title="Title"
+                handleChangeText={(e) =>
+                  setBudgetForm({ ...budgetForm, title: e })
+                }
+                otherStyles={"my-1"}
+                placeholder={"Give it a title"}
+              />
 
-            <FormField
-              title="Goal"
-              handleChangeText={(e) =>
-                setBudgetForm({ ...budgetForm, goal: parseInt(e) })
-              }
-              otherStyles={"my-1"}
-              inputMode={"numeric"}
-              placeholder={"What is the goal"}
-              otherChildren=<View className="items-center justify-centerh-full mr-1">
-                <Text className="font-pregular text-secondary text-2xl">$</Text>
-              </View>
-            />
+              <FormField
+                title="Goal"
+                handleChangeText={(e) =>
+                  setBudgetForm({ ...budgetForm, goal: parseInt(e) })
+                }
+                otherStyles={"my-1"}
+                inputMode={"numeric"}
+                placeholder={"What is the goal"}
+                otherChildren=<View className="items-center justify-centerh-full mr-1">
+                  <Text className="font-pregular text-secondary text-2xl">
+                    $
+                  </Text>
+                </View>
+              />
 
-            <DropDown
-              open={colorDropdownOpen}
-              value={colorDropdownValue}
-              items={colorDropDownItems}
-              setOpen={setColorDropdownOpen}
-              setValue={setColorDropdownValue}
-              setItems={setColorDropDownItems}
-              title={"Color"}
-              placeholder={"Select a Color"}
-              containerStyles={"my-1"}
-              zIndex={2000}
-            />
+              <DropDown
+                open={colorDropdownOpen}
+                value={colorDropdownValue}
+                items={colorDropDownItems}
+                setOpen={setColorDropdownOpen}
+                setValue={setColorDropdownValue}
+                setItems={setColorDropDownItems}
+                title={"Color"}
+                placeholder={"Select a Color"}
+                containerStyles={"my-1"}
+                zIndex={10000}
+              />
 
-            <View className="flex-row w-full my-1 h-20">
-              {/* <View className="items-center justify-center mx-2">
+              <View className="flex-row w-full my-1 h-20">
+                {/* <View className="items-center justify-center mx-2">
                 <Text className="text-gray-100 font-pmedium text-base mb-1">
                   Repeating?
                 </Text>
@@ -782,38 +785,39 @@ const Budget = () => {
                   }
                 />
               </View> */}
-              <View className="flex-1 ml-2">
-                {budgetForm.repeating ? (
-                  <DropDown
-                    open={frequencyDropdownOpen}
-                    value={frequencyDropdownValue}
-                    items={frequencyDropdownItems}
-                    setOpen={setFrequencyDropdownOpen}
-                    setValue={setFrequencyDropdownValue}
-                    setItems={setFrequencyDropdownItems}
-                    placeholder={"How often?"}
-                    title={"Frequency"}
-                    zIndex={1999}
-                  />
-                ) : (
-                  <>
-                    <Text className="text-base text-gray-100 font-pmedium">
-                      Choose a due date
-                    </Text>
-                    <View className="flex-1 justify-center items-start">
-                      {dateTimeCompoenent()}
-                    </View>
-                  </>
-                )}
+                <View className="flex-1 ml-2">
+                  {budgetForm.repeating ? (
+                    <DropDown
+                      open={frequencyDropdownOpen}
+                      value={frequencyDropdownValue}
+                      items={frequencyDropdownItems}
+                      setOpen={setFrequencyDropdownOpen}
+                      setValue={setFrequencyDropdownValue}
+                      setItems={setFrequencyDropdownItems}
+                      placeholder={"How often?"}
+                      title={"Frequency"}
+                      zIndex={1999}
+                    />
+                  ) : (
+                    <>
+                      <Text className="text-base text-gray-100 font-pmedium">
+                        Choose a due date
+                      </Text>
+                      <View className="flex-1 justify-center items-start">
+                        {dateTimeCompoenent()}
+                      </View>
+                    </>
+                  )}
+                </View>
               </View>
-            </View>
 
-            <CButton
-              containerStyles={"mt-2"}
-              title={"Create"}
-              handlePress={createBudget}
-              isWorking={createBudgetLoading}
-            />
+              <CButton
+                containerStyles={"mt-2"}
+                title={"Create"}
+                handlePress={createBudget}
+                isWorking={createBudgetLoading}
+              />
+            </View>
           </View>
         </Modal>
 
@@ -876,8 +880,19 @@ const Budget = () => {
                     title={"Yes"}
                     containerColor={"flex-1 bg-red-500"}
                     handlePress={async () => {
+                      // Get the budget to retrieve progress
+                      const budget = await getBudgetByDocId(
+                        user,
+                        editModalSelectedId
+                      );
+                      const progress = budget.progress;
                       const response = await deleteBudget(editModalSelectedId);
                       if (response == true) {
+                        // Get current virtual balance
+                        const vBal = await getVirtualBalance(user);
+                        // const newBalance = vBal[0].balance + progress;
+                        // Update virtual balance
+                        await updateVirtualBalance(virtualBalance + progress);
                         setEditModalOpen(false);
                         setDeleteOptionChecked(false);
                         Alert.alert(

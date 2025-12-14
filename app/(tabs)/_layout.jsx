@@ -10,18 +10,23 @@ const TabsLayout = () => {
     <NativeTabs>
       <NativeTabs.Trigger name="home">
         <Label>Home</Label>
-        <Icon sf={{ default: "house", selected: "house.fill" }} />
+        <Icon
+          sf={{ default: "house", selected: "house.fill" }}
+          selectedColor={"#ffaa5e"}
+        />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="budget">
         <Label>Budget</Label>
         <Icon
           sf={{ default: "wallet.bifold", selected: "wallet.bifold.fill" }}
+          selectedColor={"#ffaa5e"}
         />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="learn">
         <Label>Learn</Label>
         <Icon
           sf={{ default: "graduationcap", selected: "graduationcap.fill" }}
+          selectedColor={"#ffaa5e"}
         />
       </NativeTabs.Trigger>
     </NativeTabs>

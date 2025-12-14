@@ -1,6 +1,6 @@
-import { View, Text } from "react-native";
-import React from "react";
-import DropDownPicker from "react-native-dropdown-picker";
+import { View, Text, TouchableOpacity, FlatList } from "react-native";
+import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
+import { useRef, useMemo, useEffect } from "react";
 
 const DropDown = ({
   open,
@@ -14,41 +14,80 @@ const DropDown = ({
   containerStyles,
   zIndex,
 }) => {
+  const bottomSheetModalRef = useRef(null);
+  const snapPoints = useMemo(() => ["50%"], []);
+
+  useEffect(() => {
+    if (open) {
+      bottomSheetModalRef.current?.present();
+    } else {
+      bottomSheetModalRef.current?.dismiss();
+    }
+  }, [open]);
+
   return (
-    <View className={`${containerStyles}`}>
+    <View className={`${containerStyles}`} style={{ zIndex }}>
       <Text className="text-base text-gray-100 font-pmedium mx-2">{title}</Text>
-      <DropDownPicker
-        zIndex={zIndex}
-        open={open}
-        value={value}
-        items={items}
-        setOpen={setOpen}
-        setValue={setValue}
-        setItems={setItems}
-        placeholder={placeholder ?? ""}
-        placeholderStyle={{ color: "#7b7b8b" }}
-        dropDownContainerStyle={{
-          backgroundColor: "#203c56",
-          borderWidth: 0,
-        }}
-        style={{
-          backgroundColor: "#203c56",
-          borderWidth: 0,
-          borderRadius: 6,
-        }}
-        labelStyle={{ color: "#ffffff" }}
-        listItemContainerStyle={{
-          borderTopWidth: 1,
-          borderTopColor: "#1a3045",
-        }}
-        textStyle={{
-          color: "#ffffff",
-          fontFamily: "Poppins-Regular",
-          paddingLeft: 4,
-        }}
-        arrowIconStyle={{ tintColor: "#7b7b8b" }}
-        tickIconStyle={{ tintColor: "#fff" }}
-      />
+      <TouchableOpacity
+        onPress={() => setOpen(true)}
+        style={{ backgroundColor: "#203c56", borderRadius: 6, padding: 8 }}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={title}
+      >
+        <View className="flex-row items-center">
+          {value &&
+            items.find((item) => item.value === value)?.icon &&
+            items.find((item) => item.value === value).icon()}
+          <Text
+            className="text-white font-pregular ml-2"
+            style={{ color: value ? "#ffffff" : "#7b7b8b" }}
+          >
+            {value
+              ? items.find((item) => item.value === value)?.label
+              : placeholder ?? ""}
+          </Text>
+        </View>
+      </TouchableOpacity>
+      <BottomSheetModal
+        ref={bottomSheetModalRef}
+        index={0}
+        snapPoints={snapPoints}
+        backgroundStyle={{ backgroundColor: "#203c56" }}
+        handleIndicatorStyle={{ backgroundColor: "#7b7b8b" }}
+        onDismiss={() => setOpen(false)}
+        containerStyle={{ zIndex: 10000 }}
+      >
+        <BottomSheetView className="flex-1 p-4">
+          <FlatList
+            data={items}
+            keyExtractor={(item) => item.value}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => {
+                  setValue(item.value);
+                  setOpen(false);
+                }}
+                style={{
+                  padding: 12,
+                  borderBottomWidth: 1,
+                  borderBottomColor: "#1a3045",
+                }}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={`Select ${item.label}`}
+              >
+                <View className="flex-row items-center">
+                  {item.icon && item.icon()}
+                  <Text className="text-white font-pregular ml-2">
+                    {item.label}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+        </BottomSheetView>
+      </BottomSheetModal>
     </View>
   );
 };

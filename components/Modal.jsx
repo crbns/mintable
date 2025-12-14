@@ -1,39 +1,60 @@
+import { View, KeyboardAvoidingView, Platform } from "react-native";
 import {
-  View,
-  Text,
-  Modal as RNModal,
-  ModalProps,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
-import React from "react";
+  BottomSheetModal,
+  BottomSheetView,
+  BottomSheetBackdrop,
+} from "@gorhom/bottom-sheet";
+import { useRef, useMemo, useEffect, useCallback } from "react";
 
-// to allow modal to move up with keyboard present, add "withInput" as a prop to the modal component ==> <Modal withInput />
+const Modal = ({ isOpen, withInput, children, onRequestClose, ...rest }) => {
+  const modalRef = useRef(null);
+  const snapPoints = useMemo(() => ["90%"], []);
 
-const Modal = ({ isOpen, withInput, children, ...rest }) => {
-  const content = withInput ? (
-    <KeyboardAvoidingView
-      className="items-center justify-center flex-1 px-3 bg-zinc-900/60"
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      {children}
-    </KeyboardAvoidingView>
-  ) : (
-    <View className="items-center justify-center flex-1 px-3 bg-zinc-900/60">
-      {children}
-    </View>
+  const renderBackdrop = useCallback(
+    (props) => (
+      <BottomSheetBackdrop
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        {...props}
+      />
+    ),
+    []
   );
 
+  useEffect(() => {
+    if (isOpen) {
+      modalRef.current?.present();
+    } else {
+      modalRef.current?.dismiss();
+    }
+  }, [isOpen]);
+
   return (
-    <RNModal
-      visible={isOpen}
-      transparent
-      animationType="fade"
-      statusBarTranslucent
+    <BottomSheetModal
+      ref={modalRef}
+      index={0}
+      snapPoints={snapPoints}
+      backgroundStyle={{ backgroundColor: "#0d2b45" }}
+      handleIndicatorStyle={{ backgroundColor: "#203c56" }}
+      onDismiss={onRequestClose}
+      backdropComponent={renderBackdrop}
       {...rest}
     >
-      {content}
-    </RNModal>
+      <BottomSheetView className="flex-1">
+        <View className="items-center justify-center flex-1">
+          {withInput ? (
+            <KeyboardAvoidingView
+              className=""
+              behavior={Platform.OS === "ios" ? "padding" : "height"}
+            >
+              {children}
+            </KeyboardAvoidingView>
+          ) : (
+            <View className="px-3">{children}</View>
+          )}
+        </View>
+      </BottomSheetView>
+    </BottomSheetModal>
   );
 };
 

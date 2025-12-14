@@ -7,7 +7,13 @@ import DropDown from "./DropDown";
 import RNDateTimePicker from "@react-native-community/datetimepicker";
 import CButton from "./CButton";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { deleteBudget, editBudget } from "../lib/appwrite";
+import {
+  deleteBudget,
+  editBudget,
+  getBudgetByDocId,
+  getVirtualBalance,
+  updateVirtualBalance,
+} from "../lib/appwrite";
 import { useGlobalContext } from "../context/GlobalProvider";
 import ConfirmDrawerModal from "./ConfirmDrawerModal";
 

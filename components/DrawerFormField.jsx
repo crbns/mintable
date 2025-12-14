@@ -27,7 +27,7 @@ const DrawerFormField = ({
 
       <View className="w-full h-14 px-4 focus:border-secondary items-center flex-row border-b-2 border-alt-100">
         {otherChildren}
-        <BottomSheetTextInput
+        <TextInput
           className="flex-1 text-white font-psemibold text-base h-full"
           value={localValue}
           placeholder={placeholder}
