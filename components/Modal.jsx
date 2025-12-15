@@ -41,7 +41,7 @@ const Modal = ({ isOpen, withInput, children, onRequestClose, ...rest }) => {
       {...rest}
     >
       <BottomSheetView className="flex-1">
-        <View className="items-center justify-center flex-1">
+        <View className="flex-1">
           {withInput ? (
             <KeyboardAvoidingView
               className=""

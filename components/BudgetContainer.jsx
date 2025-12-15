@@ -56,7 +56,13 @@ const BudgetContainer = ({
 
   return (
     <>
-      <TouchableOpacity onPress={onPress}>
+      <TouchableOpacity
+        onPressOut={() => {
+          console.log("BudgetContainer onPressOut called");
+          onPress();
+        }}
+        activeOpacity={0.8}
+      >
         <View
           className={`flex-row justify-center items-center mt-2 ${containerStyles}`}
         >

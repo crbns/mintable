@@ -573,69 +573,74 @@ const Budget = () => {
           />
         </View>
 
+        {/* Allocate Modal */}
         <Modal
           isOpen={allocateModalOpen}
           withInput
           onRequestClose={() => setAllocateModalOpen(false)}
         >
-          <View className="bg-primary w-full p-4 rounded-md">
-            <View className="flex-row align-middle items-center">
-              <Text className="flex-1 text-white font-psemibold text-xl px-1">
+          <View className="flex align-center pb-10 w-full">
+            <View className="items-center justify-center relative flex-row">
+              <Text className="font-psemibold text-white text-xl text-center">
                 Allocate Money
               </Text>
               <TouchableOpacity
-                className="items-end"
+                className="absolute right-4"
                 onPress={() => {
                   setAllocateModalOpen(false);
                   setIsAllocateMode(false);
                 }}
               >
-                <MaterialCommunityIcons name="close" color={"gray"} size={32} />
+                <MaterialCommunityIcons name="close" size={22} color={"gray"} />
               </TouchableOpacity>
             </View>
 
-            <Text className="font-pregular text-md text-white">
-              You have ${virtualBalance} to allocate.
-            </Text>
-
-            <FormField
-              title={"Set amount to allocate"}
-              handleChangeText={(e) => setAllocateAmount(parseInt(e))}
-              otherStyles={"mt-1"}
-              placeholder={"Set amount"}
-              inputMode={"numeric"}
-              otherChildren=<View className="items-center justify-center h-full mr-1">
-                <Text className="font-pregular text-secondary text-2xl">$</Text>
-              </View>
-            />
-
-            {virtualBalance - allocateAmount < 0 && (
-              <SmallError text={"Number cannot excede amount to allocate"} />
-            )}
-
-            {allocateAmount && (
-              <Text className="font-pregular text-md text-white mt-1">
-                You will have $
-                {virtualBalance - allocateAmount < 0
-                  ? 0
-                  : virtualBalance - allocateAmount}{" "}
-                remaining.
+            <View className="bg-primary w-full pt-4 px-4 rounded-xl ">
+              <Text className="font-pregular text-md text-white">
+                {`You have $${virtualBalance} to allocate.`}
               </Text>
-            )}
 
-            <CButton
-              title={"Select Budget"}
-              containerStyles={"mt-3"}
-              handlePress={() => {
-                if (virtualBalance - allocateAmount >= 0) {
-                  selectBudgetAnimationRef.current?.play();
-                  setTimeout(() => {
-                    setAllocateModalOpen(false);
-                  }, 1000);
-                  setIsAllocateMode(true);
-                }
-              }}
-            />
+              <FormField
+                title={"Set amount to allocate"}
+                handleChangeText={(e) => setAllocateAmount(parseInt(e))}
+                otherStyles={"mt-1"}
+                placeholder={"Set amount"}
+                inputMode={"numeric"}
+                otherChildren=<View className="items-center justify-center h-full mr-1">
+                  <Text className="font-pregular text-secondary text-2xl">
+                    $
+                  </Text>
+                </View>
+              />
+
+              {virtualBalance - allocateAmount < 0 && (
+                <SmallError text={"Number cannot excede amount to allocate"} />
+              )}
+
+              {allocateAmount && (
+                <Text className="font-pregular text-md text-white mt-1">
+                  You will have $
+                  {virtualBalance - allocateAmount < 0
+                    ? 0
+                    : virtualBalance - allocateAmount}{" "}
+                  remaining.
+                </Text>
+              )}
+
+              <CButton
+                title={"Select Budget"}
+                containerStyles={"mt-3"}
+                handlePress={() => {
+                  if (virtualBalance - allocateAmount >= 0) {
+                    selectBudgetAnimationRef.current?.play();
+                    setTimeout(() => {
+                      setAllocateModalOpen(false);
+                    }, 1000);
+                    setIsAllocateMode(true);
+                  }
+                }}
+              />
+            </View>
 
             <LottieView
               source={require("../../assets/animations/coins_explode.json")}
@@ -716,7 +721,7 @@ const Budget = () => {
           handlePress={() => setIsBudgetOpen(true)}
         />
 
-        {/* Create Budget */}
+        {/* Create Budget Modal */}
         <Modal
           isOpen={isBudgetOpen}
           withInput

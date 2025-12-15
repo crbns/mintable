@@ -187,6 +187,7 @@ const EditBudgetDrawerModal = forwardRef(
     };
 
     const dismissed = async () => {
+      console.log("Modal dismissed");
       // if (hasChanged) {
       //   await saveChanges();
       // }
