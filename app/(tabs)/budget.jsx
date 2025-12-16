@@ -24,7 +24,13 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import DropDown from "../../components/DropDown";
 import BouncyCheckbox from "react-native-bouncy-checkbox";
 import RNDateTimePicker from "@react-native-community/datetimepicker";
-import useAppwrite from "../../lib/useAppwrite";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useIsFetching,
+} from "@tanstack/react-query";
+import { queryKeys } from "../../lib/queryKeys";
 import {
   createBudget as createBudgetDb,
   deleteBudget,
@@ -45,14 +51,46 @@ import { loadFromCache, storeToCache, CACHE_KEYS } from "../../lib/cacheUtil";
 import eventBus from "../../lib/eventBus";
 import { router } from "expo-router";
 import { useGlobalContext } from "../../context/GlobalProvider";
+import { useIsFocused } from "@react-navigation/native";
 import LottieView from "lottie-react-native";
 import DrawerModal from "../../components/DrawerModal";
 import EditBudgetDrawerModal from "../../components/EditBudgetDrawerModal";
 import { BottomSheetView } from "@gorhom/bottom-sheet";
 import { events, logEvent } from "../../lib/appsflyer";
+import * as SecureStore from "expo-secure-store";
 
 const Budget = () => {
   const { user, isLoggedIn } = useGlobalContext();
+  const queryClient = useQueryClient();
+  const isFocused = useIsFocused();
+
+  // Log user state changes
+  useEffect(() => {
+    console.log("User state changed:", {
+      isLoggedIn,
+      userExists: !!user,
+      userId: user?.$id,
+    });
+  }, [user, isLoggedIn]);
+
+  // Auto-refetch when screen becomes focused
+  useEffect(() => {
+    if (isFocused && user) {
+      console.log("📱 [FOCUS] Screen focused, checking if refetch needed...");
+      // Check if query exists and is stale
+      const queryState = queryClient.getQueryState(
+        queryKeys.budgets.list(user.$id)
+      );
+      const isStale = queryState?.isStale || false;
+
+      if (isStale) {
+        console.log("📱 [FOCUS] Query is stale, triggering refetch...");
+        refetch();
+      } else {
+        console.log("📱 [FOCUS] Query is fresh, no refetch needed");
+      }
+    }
+  }, [isFocused, user]);
 
   if (!isLoggedIn) {
     return (
@@ -235,81 +273,168 @@ const Budget = () => {
     setItems(items.filter((item) => item.id !== id));
   };
 
-  const { data: budgets, refetch } = useAppwrite(getBudgets, user);
+  const {
+    data: budgets,
+    refetch,
+    error,
+    isFetching,
+    isStale,
+  } = useQuery({
+    queryKey: queryKeys.budgets.list(user.$id),
+    queryFn: async () => {
+      console.log(
+        "🔄 [QUERY] Fetching budgets with react-query for user",
+        user?.$id
+      );
+      if (!user) {
+        console.error("ERROR: user is null/undefined in budget query");
+        throw new Error("User is not available");
+      }
+      const result = await getBudgets(user);
+      console.log("🔄 [QUERY] Budgets fetched successfully:", {
+        count: result?.length || 0,
+        userId: user?.$id,
+        timestamp: new Date().toISOString(),
+      });
+      return result;
+    },
+    enabled: !!user, // Only run query when user is available
+    // Add more debugging info
+    notifyOnChangeProps: ["data", "error", "isFetching", "isStale"],
+  });
+
+  // Create mutation for budget creation with automatic invalidation
+  const createBudgetMutation = useMutation({
+    mutationFn: async (budgetData) => {
+      console.log("🚀 [MUTATION] Creating budget with data:", {
+        title: budgetData.title,
+        goal: budgetData.goal,
+        userId: user?.$id,
+      });
+
+      const result = await createBudgetDb(
+        budgetData.title,
+        budgetData.goal,
+        budgetData.goalTime,
+        user,
+        budgetData.repeating,
+        budgetData.repeatingFrequency,
+        budgetData.color,
+        budgetData.started
+      );
+
+      console.log("🚀 [MUTATION] Budget created successfully:", {
+        budgetId: result?.$id,
+        title: result?.title,
+      });
+
+      return result;
+    },
+    onSuccess: (newBudget) => {
+      console.log("✅ [MUTATION] Budget created, invalidating queries...");
+      // Invalidate budgets query to trigger automatic refetch
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.budgets.list(user.$id),
+      });
+
+      logEvent(events.CREATE_BUDGET);
+      setIsBudgetOpen(false);
+
+      console.log("✅ [MUTATION] Query invalidation triggered successfully");
+    },
+    onError: (error) => {
+      console.error("❌ [MUTATION] Budget creation failed:", error);
+      Alert.alert("Error", "Failed to create budget. Please try again.");
+    },
+  });
+
+  // Extract mutation state for UI
+  const { isPending: createBudgetLoading } = createBudgetMutation;
+
+  // Log query state changes
+  useEffect(() => {
+    console.log("📊 [QUERY STATE] Budgets query state changed:", {
+      hasData: !!budgets,
+      dataLength: budgets?.length || 0,
+      isFetching,
+      isStale,
+      error: error?.message || null,
+      user: user?.$id,
+      timestamp: new Date().toISOString(),
+    });
+  }, [budgets, error, user, isFetching, isStale]);
+
+  // Log query state changes
+  useEffect(() => {
+    console.log("Query budgets state changed:", {
+      data: budgets,
+      error,
+      user: user?.$id,
+    });
+  }, [budgets, error, user]);
   // const { data: vBalance, vBRefetch } = useAppwrite(getVirtualBalance);
 
   const [refreshing, setRefreshing] = useState(false);
 
   const onFirstRefresh = async () => {
+    console.log("onFirstRefresh called");
     setRefreshing(true);
 
-    const budgetData = await getBudgets(user);
-    // await vBRefetch(); not sure why its hanging on this
-    // temporary solution
-    const vBal = await getVirtualBalance(user);
-
-    setItems(() => []);
-
-    // add each budget to items
-    // const newItems = budgetData.map((element) => ({
-    //   id: element.$id,
-    //   name: element.title,
-    //   color: element.color,
-    //   progress: element.progress,
-    //   goal: element.goal,
-    //   start: element.start,
-    //   end: element.end,
-    // }));
-
-    const newItems = budgetData
-      .filter(function (element) {
-        // console.log(element.progress + "," + element.goal);
-        return element.progress < element.goal;
-      })
-      .map((element) => ({
-        id: element.$id,
-        name: element.title,
-        color: element.color,
-        progress: element.progress,
-        goal: element.goal,
-        start: element.start,
-        end: element.end,
-        goalTime: element.goalTime,
-      }));
-
-    setItems(newItems);
-
-    setVirtualBalance(vBal[0].balance);
-
-    setRefreshing(false);
+    try {
+      const vBal = await getVirtualBalance(user);
+      console.log("Virtual balance loaded:", vBal[0].balance);
+      setVirtualBalance(vBal[0].balance);
+    } catch (error) {
+      console.error("Error loading virtual balance:", error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const onRefresh = async () => {
+    console.log("🔄 [REFRESH] Manual refresh triggered");
     setRefreshing(true);
 
-    const freshBudgets = await refetch(user);
-    const vBal = await getVirtualBalance(user);
+    try {
+      console.log("🔄 [REFRESH] Calling refetch...");
+      const result = await refetch();
+      console.log("🔄 [REFRESH] Refetch completed:", {
+        success: !!result.data,
+        dataLength: result.data?.length || 0,
+        isStale: result.isStale,
+      });
 
-    const filteredItems = freshBudgets
-      .filter((b) => b.progress < b.goal)
-      .map((b) => ({
-        id: b.$id,
-        name: b.title,
-        color: b.color,
-        progress: b.progress,
-        goal: b.goal,
-        start: b.started,
-        end: b.end,
-        goalTime: b.goalTime,
-      }));
+      const freshBudgets = result.data;
+      const vBal = await getVirtualBalance(user);
 
-    setItems(filteredItems);
-    setVirtualBalance(vBal[0].balance);
+      const filteredItems = freshBudgets
+        .filter((b) => b.progress < b.goal)
+        .map((b) => ({
+          id: b.$id,
+          name: b.title,
+          color: b.color,
+          progress: b.progress,
+          goal: b.goal,
+          start: b.started,
+          end: b.end,
+          goalTime: b.goalTime,
+        }));
 
-    setRefreshing(false);
+      console.log("🔄 [REFRESH] Updating UI with filtered items:", {
+        originalCount: freshBudgets?.length || 0,
+        filteredCount: filteredItems.length,
+      });
+
+      setItems(filteredItems);
+      setVirtualBalance(vBal[0].balance);
+    } catch (error) {
+      console.error("❌ [REFRESH] Error in onRefresh:", error);
+    } finally {
+      setRefreshing(false);
+      console.log("🔄 [REFRESH] Manual refresh completed");
+    }
   };
 
-  const [createBudgetLoading, setCreateBudgetLoading] = useState(false);
   const createBudget = async () => {
     if (!budgetForm.title || !budgetForm.goal || colorDropdownValue === null) {
       console.warn(budgetForm.title);
@@ -320,45 +445,20 @@ const Budget = () => {
       return;
     }
 
-    budgetForm.color = colorDropdownValue;
+    const budgetData = {
+      ...budgetForm,
+      color: colorDropdownValue,
+    };
 
-    setCreateBudgetLoading(true);
+    console.log("🎯 [UI] Creating budget with data:", {
+      title: budgetData.title,
+      goal: budgetData.goal,
+      color: budgetData.color,
+      userId: user?.$id,
+    });
 
-    try {
-      // const currentUser = await getCurrentUser();
-
-      const currentUser = user;
-
-      const result = await createBudgetDb(
-        budgetForm.title,
-        budgetForm.goal,
-        budgetForm.goalTime,
-        currentUser,
-        budgetForm.repeating,
-        budgetForm.repeatingFrequency,
-        budgetForm.color,
-        budgetForm.started
-      );
-
-      if (!result) {
-        Alert.alert("Error", "Something went wrong");
-      } else {
-        setIsBudgetOpen(false);
-        logEvent(events.CREATE_BUDGET);
-        // Alert.alert(
-        //   "Success",
-        //   "Be sure to refresh the page to see the changes!"
-        // );
-      }
-      setTimeout(() => {
-        onRefresh();
-      }, 1000);
-    } catch (error) {
-      Alert.alert("Error", "Something went wrong");
-      console.error(error);
-    } finally {
-      setCreateBudgetLoading(false);
-    }
+    // Use the mutation instead of direct API call
+    createBudgetMutation.mutate(budgetData);
   };
 
   const [allocateModalOpen, setAllocateModalOpen] = useState(false);
@@ -367,6 +467,7 @@ const Budget = () => {
 
   // called when budget is selected in allocate mode
   const allocateMode = async (id) => {
+    console.log("allocateMode called with id:", id);
     if (items.length === 0) {
       Alert.alert(
         "Error",
@@ -379,7 +480,9 @@ const Budget = () => {
     }
 
     // get budget from db instead of relying on possibly outdated ui data
+    console.log("Fetching budget from DB for allocation:", id);
     const budgetFromDb = await getBudgetByDocId(user, id);
+    console.log("Budget from DB:", budgetFromDb);
     // update progress and goal accoring to databse
     const progress = budgetFromDb.progress;
     const goal = budgetFromDb.goal;
@@ -452,6 +555,7 @@ const Budget = () => {
   const [deleteOptionChecked, setDeleteOptionChecked] = useState(false);
 
   const editBudget = async (item) => {
+    console.log("editBudget called with item:", item);
     setEditDrawerData(item);
     editDrawerModal.current?.present();
     // router.navigate({
@@ -491,7 +595,37 @@ const Budget = () => {
     onFirstRefresh();
   }, [setupComplete]);
 
+  useEffect(() => {
+    if (budgets) {
+      console.log("Setting items from budgets", budgets.length);
+      const newItems = budgets
+        .filter((element) => element.progress < element.goal)
+        .map((element) => ({
+          id: element.$id,
+          name: element.title,
+          color: element.color,
+          progress: element.progress,
+          goal: element.goal,
+          start: element.started,
+          end: element.end,
+          goalTime: element.goalTime,
+        }));
+      setItems(newItems);
+    } else {
+      console.log("Budgets is null/undefined, not setting items");
+    }
+  }, [budgets]);
+
+  // Add error boundary check
+  useEffect(() => {
+    if (error) {
+      console.error("Budget query error:", error);
+      Alert.alert("Error", "Failed to load budgets. Please try again.");
+    }
+  }, [error]);
+
   const setSetupCompleteTrue = () => {
+    console.log("Setup completed, setting setupComplete to true");
     setSetupComplete(true);
   };
 
@@ -499,9 +633,14 @@ const Budget = () => {
   const selectBudgetAnimationRef = useRef(null);
 
   if (!setupComplete) {
+    console.log("Setup not complete, showing BudgetSetup");
     return <BudgetSetup update={setSetupCompleteTrue} />;
   }
 
+  console.log(
+    "Rendering main budget screen with setupComplete:",
+    setupComplete
+  );
   return (
     <SafeAreaView
       className="bg-primary h-full  pt-5"
@@ -513,6 +652,7 @@ const Budget = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => {
+              console.log("Manual refresh triggered");
               setRefreshing(true);
               setTimeout(() => {
                 onRefresh();
@@ -532,7 +672,10 @@ const Budget = () => {
           </Text>
           <TouchableOpacity
             className="items-end mr-2"
-            onPress={() => router.push("settings")}
+            onPress={() => {
+              console.log("Settings button pressed");
+              router.push("settings");
+            }}
           >
             <MaterialCommunityIcons
               name="cog-outline"
@@ -561,6 +704,7 @@ const Budget = () => {
             textColor={"text-white"}
             textWeight={"font-pregular"}
             handlePress={() => {
+              console.log("Allocate button pressed, items:", items.length);
               if (items.length === 0) {
                 Alert.alert(
                   "Error",
@@ -587,6 +731,7 @@ const Budget = () => {
               <TouchableOpacity
                 className="absolute right-4"
                 onPress={() => {
+                  console.log("Allocate modal close button pressed");
                   setAllocateModalOpen(false);
                   setIsAllocateMode(false);
                 }}
@@ -682,6 +827,10 @@ const Budget = () => {
                 date={item.goalTime}
                 //buttonDisabled={!isAllocateMode} NOT USED
                 onPress={() => {
+                  console.log(
+                    "BudgetContainer onPress called for item:",
+                    item.id
+                  );
                   if (isAllocateMode) {
                     allocateMode(item.id);
                   } else {
@@ -725,7 +874,10 @@ const Budget = () => {
         <Modal
           isOpen={isBudgetOpen}
           withInput
-          onRequestClose={() => setIsBudgetOpen(false)}
+          onRequestClose={() => {
+            console.log("Create budget modal closed");
+            setIsBudgetOpen(false);
+          }}
         >
           <View className="flex align-center pb-10 w-full">
             <View className="items-center justify-center relative flex-row">
@@ -830,6 +982,7 @@ const Budget = () => {
         <Modal
           isOpen={editModalOpen}
           onRequestClose={() => {
+            console.log("Edit modal closed");
             setEditModalOpen(false);
             setDeleteOptionChecked(false);
           }}
@@ -927,7 +1080,10 @@ const Budget = () => {
       <EditBudgetDrawerModal
         ref={editDrawerModal}
         budget={editDrawerData}
-        requireRefresh={onRefresh}
+        requireRefresh={() => {
+          console.log("EditBudgetDrawerModal calling onRefresh");
+          onRefresh();
+        }}
       />
     </SafeAreaView>
   );

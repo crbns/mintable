@@ -18,22 +18,49 @@ import {
   updatePreferences,
   updateVirtualBalanceUpdateAmount,
 } from "../../lib/appwrite";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../lib/queryKeys";
 
 const updateAmount = () => {
   const [addAmount, setAddAmount] = useState(0);
+  const queryClient = useQueryClient();
 
-  const onSave = async () => {
-    // trusting that the user put in the right amount
-    const res = await updateVirtualBalanceUpdateAmount(addAmount);
-    if (res) {
+  const updateAmountMutation = useMutation({
+    mutationFn: async (amount) => {
+      console.log(
+        "🔄 [MUTATION] Updating virtual balance update amount:",
+        amount
+      );
+      const result = await updateVirtualBalanceUpdateAmount(amount);
+      console.log(
+        "✅ [MUTATION] Virtual balance update amount updated successfully"
+      );
+      return result;
+    },
+    onSuccess: () => {
+      // Invalidate virtual balance queries to refetch updated data
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.virtualBalance.all,
+      });
       router.back();
       Alert.alert(
         "Success",
-        "Amount has been sucessfully changed to " + addAmount + "."
+        "Amount has been successfully changed to $" + addAmount + "."
       );
-    } else {
+    },
+    onError: (error) => {
+      console.error(
+        "❌ [MUTATION] Failed to update virtual balance update amount:",
+        error
+      );
       Alert.alert("Error", "Something went wrong.");
-    }
+    },
+  });
+
+  const { isPending: isUpdating } = updateAmountMutation;
+
+  const onSave = () => {
+    updateAmountMutation.mutate(addAmount);
   };
 
   return (
@@ -66,6 +93,7 @@ const updateAmount = () => {
           title={"Save"}
           containerStyles={"mt-10"}
           handlePress={onSave}
+          isWorking={isUpdating}
         />
       </SafeAreaView>
     </TouchableWithoutFeedback>

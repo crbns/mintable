@@ -4,9 +4,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import MultiChoice from "../../components/MultiChoice";
 import CButton from "../../components/CButton";
 import { router, useLocalSearchParams } from "expo-router";
-import useAppwrite from "../../lib/useAppwrite";
 import { getChapterLessonIdQuiz, getChapterQuiz } from "../../lib/appwrite";
-import { CACHE_KEYS, loadFromCache, storeToCache } from "../../lib/cacheUtil";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "../../lib/queryKeys";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const TakeQuiz = () => {
@@ -14,40 +14,32 @@ const TakeQuiz = () => {
   const [answered, setAnswered] = useState(false);
   const [score, setScore] = useState(0);
 
-  // cache loading
-  const [data, setData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
   const { chapter, lessonId } = useLocalSearchParams();
 
-  // key of cache, fn: appwrite function in appwrite.js
-  const loadData = async (key, fn) => {
-    setIsLoading(true);
-    const cachedData = await loadFromCache(key);
-    // if data already exists, load that and dont make call to db
-    // if (cachedData) {
-    //   console.log("loading cached data");
-    //   setData(cachedData);
-    //   setIsLoading(false);
-    //   return;
-    // }
+  // Use React Query for quiz data
+  const { data, isLoading } = useQuery({
+    queryKey: queryKeys.lessons.chapterLesson(parseInt(chapter), lessonId),
+    queryFn: async () => {
+      console.log(
+        "[QUERY] Fetching quiz data for chapter",
+        chapter,
+        "lesson",
+        lessonId
+      );
+      const result = await getChapterLessonIdQuiz(parseInt(chapter), lessonId);
+      console.log(
+        "[QUERY] Quiz data fetched:",
+        result?.length || 0,
+        "questions"
+      );
+      return result;
+    },
+  });
 
-    // data isnt cached already so make call to appwrite db
-    console.log("loading db data");
-    const dbData = await fn(parseInt(chapter), lessonId);
-    await storeToCache(key, dbData);
-
-    setData(dbData);
-    setIsLoading(false);
-  };
-  let length = null;
-  if (data !== null) {
+  let length = 0;
+  if (data && Array.isArray(data)) {
     length = data.length;
   }
-
-  useEffect(() => {
-    loadData(`${chapter}${lessonId}`, getChapterLessonIdQuiz);
-  }, []);
 
   if (isLoading) {
     return (
@@ -59,7 +51,7 @@ const TakeQuiz = () => {
     );
   }
 
-  if (data[0] === undefined || data === undefined) {
+  if (!data || data.length === 0) {
     return (
       <SafeAreaView className="bg-primary p-5 mt-">
         <View className="h-full items-center justify-center">
@@ -82,7 +74,7 @@ const TakeQuiz = () => {
         <TouchableOpacity className="p-5" onPress={() => router.back()}>
           <MaterialCommunityIcons name="close" color={"#203c56"} size={50} />
         </TouchableOpacity>
-        {index < length ? (
+        {data && index < length ? (
           <>
             <View className="flex flex-col h-4/5  px-4">
               <View className="flex-1 w-full flex items-center justify-center">

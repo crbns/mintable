@@ -14,12 +14,15 @@ import {
   getVirtualBalance,
   updateVirtualBalance,
 } from "../lib/appwrite";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../lib/queryKeys";
 import { useGlobalContext } from "../context/GlobalProvider";
 import ConfirmDrawerModal from "./ConfirmDrawerModal";
 
 const EditBudgetDrawerModal = forwardRef(
   ({ onDismiss, budget, requireRefresh }, ref) => {
     const { user } = useGlobalContext();
+    const queryClient = useQueryClient();
 
     const [colorDropdownOpen, setColorDropdownOpen] = useState(false);
     const [colorDropdownValue, setColorDropdownValue] = useState(null);
@@ -166,8 +169,30 @@ const EditBudgetDrawerModal = forwardRef(
       );
     };
 
-    const saveChanges = async () => {
-      const res = await editBudget(budgetId, {
+    const editBudgetMutation = useMutation({
+      mutationFn: async (budgetData) => {
+        console.log("[MUTATION] Editing budget:", budgetData);
+        const result = await editBudget(budgetId, budgetData);
+        console.log("[MUTATION] Budget edited successfully");
+        return result;
+      },
+      onSuccess: () => {
+        // Invalidate budgets query to refetch updated data
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.budgets.all,
+        });
+        Alert.alert("Success!", "Your budget has been edited.");
+        requireRefresh();
+        ref.current?.dismiss();
+      },
+      onError: (error) => {
+        console.error("[MUTATION] Failed to edit budget:", error);
+        Alert.alert("Error", "Something went wrong");
+      },
+    });
+
+    const saveChanges = () => {
+      editBudgetMutation.mutate({
         title: budgetForm.title,
         goal: budgetForm.goal,
         goalTime: budgetForm.goalTime,
@@ -176,14 +201,6 @@ const EditBudgetDrawerModal = forwardRef(
         started: budgetForm.started,
         accountId: user.accountId,
       });
-
-      if (res) {
-        Alert.alert("Success!", "Your budget has been edited.");
-        requireRefresh();
-        ref.current?.dismiss();
-      } else {
-        Alert.alert("Error", "Something went wrong");
-      }
     };
 
     const dismissed = async () => {
@@ -236,29 +253,37 @@ const EditBudgetDrawerModal = forwardRef(
       setChangeDetected(hasChanged);
     }, [budgetForm]);
 
-    useEffect(() => {
-      async function deleteB() {
-        if (confirmFormReturn) {
-          ref.current?.dismiss();
-          const response = await deleteBudget(budgetId);
-          if (response == true) {
-            Alert.alert("Success!", "Successfully deleted your budget");
-            if (requireRefresh) {
-              requireRefresh();
-            } else {
-              console.warn(
-                "Require refresh function required! Continuting anyway."
-              );
-            }
-            setConfirmFormReturn(false);
-          } else {
-            Alert.alert("Error", "Something went wrong");
-          }
+    const deleteBudgetMutation = useMutation({
+      mutationFn: async (id) => {
+        console.log("[MUTATION] Deleting budget:", id);
+        const result = await deleteBudget(id);
+        console.log("[MUTATION] Budget deleted successfully");
+        return result;
+      },
+      onSuccess: () => {
+        // Invalidate budgets query to refetch updated data
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.budgets.all,
+        });
+        Alert.alert("Success!", "Successfully deleted your budget");
+        if (requireRefresh) {
+          requireRefresh();
         } else {
-          // something else maybe?
+          console.warn("Require refresh function required! Continuing anyway.");
         }
+        setConfirmFormReturn(false);
+      },
+      onError: (error) => {
+        console.error("[MUTATION] Failed to delete budget:", error);
+        Alert.alert("Error", "Something went wrong");
+      },
+    });
+
+    useEffect(() => {
+      if (confirmFormReturn) {
+        ref.current?.dismiss();
+        deleteBudgetMutation.mutate(budgetId);
       }
-      deleteB();
     }, [confirmFormReturn]);
 
     return (

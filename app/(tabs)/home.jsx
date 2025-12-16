@@ -18,7 +18,9 @@ import CButton from "../../components/CButton";
 import BudgetContributionGraph from "../../components/BudgetContributionGraph";
 import HomeBudgetList from "../../components/HomeBudgetList";
 import { useGlobalContext } from "../../context/GlobalProvider";
-import { getPreferences } from "../../lib/appwrite";
+import { getPreferences, updatePreferences } from "../../lib/appwrite";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "../../lib/queryKeys";
 
 const Home = () => {
   const { user, isLoggedIn, isLoading } = useGlobalContext();
@@ -125,16 +127,28 @@ const Home = () => {
 
   const [setupComplete, setSetupComplete] = useState(true);
 
+  // Use React Query for preferences
+  const { data: preferences } = useQuery({
+    queryKey: queryKeys.preferences.current(),
+    queryFn: async () => {
+      console.log("🔄 [QUERY] Fetching preferences");
+      const result = await getPreferences();
+      console.log("🔄 [QUERY] Preferences fetched:", result);
+      return result;
+    },
+  });
+
   const checkBudgetSetup = async () => {
-    const response = await getPreferences();
+    if (!preferences) return;
+
     // if cache key doesn't exist, call db and store value to cache
-    if (response.budgetOnboardComplete === null) {
+    if (preferences.budgetOnboardComplete === null) {
       setSetupComplete(false);
-      response.budgetOnboardComplete = false;
-      await updatePreferences(response);
-    } else if (response.budgetOnboardComplete === true) {
+      const updatedPrefs = { ...preferences, budgetOnboardComplete: false };
+      await updatePreferences(updatedPrefs);
+    } else if (preferences.budgetOnboardComplete === true) {
       setSetupComplete(true);
-    } else if (response.budgetOnboardComplete === false) {
+    } else if (preferences.budgetOnboardComplete === false) {
       setSetupComplete(false);
     }
   };
@@ -150,9 +164,15 @@ const Home = () => {
         setGreeting("Good evening");
       }
     };
-    checkBudgetSetup();
     updateGreeting();
   }, []);
+
+  // Check budget setup when preferences are loaded
+  useEffect(() => {
+    if (preferences) {
+      checkBudgetSetup();
+    }
+  }, [preferences]);
 
   if (isLoading) {
     return (

@@ -18,6 +18,8 @@ import {
   updatePreferences,
   updateVirtualBalanceUpdateFreq,
 } from "../../lib/appwrite";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../lib/queryKeys";
 import SmallInfo from "../../components/SmallInfo";
 
 const updateFrequency = () => {
@@ -44,7 +46,45 @@ const updateFrequency = () => {
     { label: "Yearly", value: "yearly" },
   ]);
 
-  const onSave = async () => {
+  const queryClient = useQueryClient();
+
+  const updateFrequencyMutation = useMutation({
+    mutationFn: async (frequency) => {
+      console.log(
+        "🔄 [MUTATION] Updating virtual balance update frequency:",
+        frequency
+      );
+      const result = await updateVirtualBalanceUpdateFreq(frequency);
+      console.log(
+        "✅ [MUTATION] Virtual balance update frequency updated successfully"
+      );
+      return result;
+    },
+    onSuccess: () => {
+      // Invalidate virtual balance queries to refetch updated data
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.virtualBalance.all,
+      });
+      router.back();
+      Alert.alert(
+        "Success",
+        "Update frequency has been successfully changed to " +
+          frequencyDropdownValue +
+          "."
+      );
+    },
+    onError: (error) => {
+      console.error(
+        "❌ [MUTATION] Failed to update virtual balance update frequency:",
+        error
+      );
+      Alert.alert("Error", "Something went wrong.");
+    },
+  });
+
+  const { isPending: isUpdating } = updateFrequencyMutation;
+
+  const onSave = () => {
     if (frequencyDropdownValue === null) {
       Alert.alert("Error", "Please fill out all fields.");
       return;
@@ -58,22 +98,7 @@ const updateFrequency = () => {
       return;
     }
 
-    // if (dateFreqDropdownValue !== null) {
-    //   prefs.updateFreqDate = dateFreqDropdownValue;
-    // }
-
-    const res = await updateVirtualBalanceUpdateFreq(frequencyDropdownValue);
-    if (res) {
-      router.back();
-      Alert.alert(
-        "Success",
-        "Update frequency has been sucessfully changed to " +
-          frequencyDropdownValue +
-          "."
-      );
-    } else {
-      Alert.alert("Error", "Something went wrong.");
-    }
+    updateFrequencyMutation.mutate(frequencyDropdownValue);
   };
 
   return (
@@ -149,6 +174,7 @@ const updateFrequency = () => {
           title={"Save"}
           containerStyles={"mt-10"}
           handlePress={onSave}
+          isWorking={isUpdating}
         />
       </SafeAreaView>
     </TouchableWithoutFeedback>

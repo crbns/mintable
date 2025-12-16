@@ -11,6 +11,8 @@ import appsFlyer from "react-native-appsflyer";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "../lib/queryClient";
 
 import "react-native-reanimated";
 import { useReviewPrompter } from "../lib/useReviewPrompter";
@@ -71,49 +73,54 @@ const RootLayout = () => {
   if (!fontsLoaded && !error) return null;
 
   return (
-    <SafeAreaProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <BottomSheetModalProvider>
-          <GlobalProvider>
-            <NetworkProvider>
-              <ForceUpdateGate>
-                <Stack
-                  screenOptions={{
-                    contentStyle: { backgroundColor: "#0d2b45" },
-                  }}
-                >
-                  <Stack.Screen name="index" options={{ headerShown: false }} />
-                  <Stack.Screen
-                    name="(auth)"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="(tabs)"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="(quiz)"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="(settings)"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="(history)"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="(demo)"
-                    options={{ headerShown: false }}
-                  />
-                </Stack>
-              </ForceUpdateGate>
-            </NetworkProvider>
-          </GlobalProvider>
-        </BottomSheetModalProvider>
-      </GestureHandlerRootView>
-    </SafeAreaProvider>
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <BottomSheetModalProvider>
+            <GlobalProvider>
+              <NetworkProvider>
+                <ForceUpdateGate>
+                  <Stack
+                    screenOptions={{
+                      contentStyle: { backgroundColor: "#0d2b45" },
+                    }}
+                  >
+                    <Stack.Screen
+                      name="index"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="(auth)"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="(tabs)"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="(quiz)"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="(settings)"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="(history)"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="(demo)"
+                      options={{ headerShown: false }}
+                    />
+                  </Stack>
+                </ForceUpdateGate>
+              </NetworkProvider>
+            </GlobalProvider>
+          </BottomSheetModalProvider>
+        </GestureHandlerRootView>
+      </SafeAreaProvider>
+    </QueryClientProvider>
   );
 };
 
