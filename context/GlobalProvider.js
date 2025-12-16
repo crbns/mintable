@@ -10,8 +10,13 @@ const GlobalProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log("GLOBAL: getCurrentUser effect triggered");
     getCurrentUser()
       .then((res) => {
+        console.log(
+          "GLOBAL: getCurrentUser result:",
+          res ? "user found" : "no user"
+        );
         if (res) {
           setIsLoggedIn(true);
           setUser(res);
@@ -21,9 +26,12 @@ const GlobalProvider = ({ children }) => {
         }
       })
       .catch((error) => {
-        console.log(error);
+        console.log("GLOBAL: getCurrentUser error:", error);
+        setIsLoggedIn(false);
+        setUser(null);
       })
       .finally(() => {
+        console.log("GLOBAL: getCurrentUser effect complete");
         setIsLoading(false);
       });
   }, []);

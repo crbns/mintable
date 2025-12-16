@@ -60,7 +60,9 @@ import { events, logEvent } from "../../lib/appsflyer";
 import * as SecureStore from "expo-secure-store";
 
 const Budget = () => {
+  console.log("Budget component render start");
   const { user, isLoggedIn } = useGlobalContext();
+  console.log("Budget render: isLoggedIn =", isLoggedIn, "user =", !!user);
   const queryClient = useQueryClient();
   const isFocused = useIsFocused();
 
@@ -92,40 +94,7 @@ const Budget = () => {
     }
   }, [isFocused, user]);
 
-  if (!isLoggedIn) {
-    return (
-      <SafeAreaView
-        className="bg-primary h-full px-5 pt-5"
-        edges={["right", "top", "left"]}
-      >
-        <View className="flex-1 justify-center items-center gap-10">
-          <View>
-            <Text className="font-psemibold text-center text-2xl text-white">
-              Log in to Mintable to create budgets.
-            </Text>
-            <Text className="font-pregular text-center text-rg text-gray-500 mt-5">
-              We ask you to log in to securely save and sync your budget data
-              across devices. We never share your information.
-            </Text>
-          </View>
-          <View className="w-full">
-            <CButton
-              title={"Log In"}
-              handlePress={() => router.push("/sign-in")}
-            />
-            <CButton
-              title={"Try as Guest"}
-              containerStyles={"mt-3 border-2 border-gray-600"}
-              containerColor={"bg-primary"}
-              textColor={"text-gray-600"}
-              handlePress={() => router.push("/budgetDemo")}
-            />
-          </View>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
+  // All state
   const [progress, setProgress] = useState(0);
   const [virtualBalance, setVirtualBalance] = useState(0);
   const [items, setItems] = useState([]);
@@ -254,127 +223,38 @@ const Budget = () => {
     ),
   });
 
-  const addItem = (id, name, color, progress, goal, start, end) => {
-    setItems([
-      ...items,
-      {
-        id: id,
-        name: name,
-        color: color,
-        progress: progress,
-        goal: goal,
-        start: start,
-        end: end,
-      },
-    ]);
-  };
-
-  const removeItem = (id) => {
-    setItems(items.filter((item) => item.id !== id));
-  };
-
-  const {
-    data: budgets,
-    refetch,
-    error,
-    isFetching,
-    isStale,
-  } = useQuery({
-    queryKey: queryKeys.budgets.list(user.$id),
-    queryFn: async () => {
-      console.log(
-        "🔄 [QUERY] Fetching budgets with react-query for user",
-        user?.$id
-      );
-      if (!user) {
-        console.error("ERROR: user is null/undefined in budget query");
-        throw new Error("User is not available");
-      }
-      const result = await getBudgets(user);
-      console.log("🔄 [QUERY] Budgets fetched successfully:", {
-        count: result?.length || 0,
-        userId: user?.$id,
-        timestamp: new Date().toISOString(),
-      });
-      return result;
-    },
-    enabled: !!user, // Only run query when user is available
-    // Add more debugging info
-    notifyOnChangeProps: ["data", "error", "isFetching", "isStale"],
-  });
-
-  // Create mutation for budget creation with automatic invalidation
-  const createBudgetMutation = useMutation({
-    mutationFn: async (budgetData) => {
-      console.log("🚀 [MUTATION] Creating budget with data:", {
-        title: budgetData.title,
-        goal: budgetData.goal,
-        userId: user?.$id,
-      });
-
-      const result = await createBudgetDb(
-        budgetData.title,
-        budgetData.goal,
-        budgetData.goalTime,
-        user,
-        budgetData.repeating,
-        budgetData.repeatingFrequency,
-        budgetData.color,
-        budgetData.started
-      );
-
-      console.log("🚀 [MUTATION] Budget created successfully:", {
-        budgetId: result?.$id,
-        title: result?.title,
-      });
-
-      return result;
-    },
-    onSuccess: (newBudget) => {
-      console.log("✅ [MUTATION] Budget created, invalidating queries...");
-      // Invalidate budgets query to trigger automatic refetch
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.budgets.list(user.$id),
-      });
-
-      logEvent(events.CREATE_BUDGET);
-      setIsBudgetOpen(false);
-
-      console.log("✅ [MUTATION] Query invalidation triggered successfully");
-    },
-    onError: (error) => {
-      console.error("❌ [MUTATION] Budget creation failed:", error);
-      Alert.alert("Error", "Failed to create budget. Please try again.");
-    },
-  });
-
-  // Extract mutation state for UI
-  const { isPending: createBudgetLoading } = createBudgetMutation;
-
-  // Log query state changes
-  useEffect(() => {
-    console.log("📊 [QUERY STATE] Budgets query state changed:", {
-      hasData: !!budgets,
-      dataLength: budgets?.length || 0,
-      isFetching,
-      isStale,
-      error: error?.message || null,
-      user: user?.$id,
-      timestamp: new Date().toISOString(),
-    });
-  }, [budgets, error, user, isFetching, isStale]);
-
-  // Log query state changes
-  useEffect(() => {
-    console.log("Query budgets state changed:", {
-      data: budgets,
-      error,
-      user: user?.$id,
-    });
-  }, [budgets, error, user]);
-  // const { data: vBalance, vBRefetch } = useAppwrite(getVirtualBalance);
-
   const [refreshing, setRefreshing] = useState(false);
+
+  const [allocateModalOpen, setAllocateModalOpen] = useState(false);
+  const [allocateAmount, setAllocateAmount] = useState(0);
+  const [isAllocateMode, setIsAllocateMode] = useState(false);
+
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const editDrawerModal = useRef(null);
+  const [editDrawerData, setEditDrawerData] = useState(null);
+  const [editModalSelectedId, setEditModalSelectedId] = useState(-1);
+  const [deleteOptionChecked, setDeleteOptionChecked] = useState(false);
+
+  const [setupComplete, setSetupComplete] = useState(false);
+  console.log("Budget render: setupComplete =", setupComplete);
+
+  // animation refs
+  const selectBudgetAnimationRef = useRef(null);
+
+  // Functions
+  const checkBudgetSetup = async () => {
+    const response = await getPreferences();
+    // if cache key doesn't exist, call db and store value to cache
+    if (response.budgetOnboardComplete === null) {
+      setSetupComplete(false);
+      response.budgetOnboardComplete = false;
+      await updatePreferences(response);
+    } else if (response.budgetOnboardComplete === true) {
+      setSetupComplete(true);
+    } else if (response.budgetOnboardComplete === false) {
+      setSetupComplete(false);
+    }
+  };
 
   const onFirstRefresh = async () => {
     console.log("onFirstRefresh called");
@@ -461,11 +341,6 @@ const Budget = () => {
     createBudgetMutation.mutate(budgetData);
   };
 
-  const [allocateModalOpen, setAllocateModalOpen] = useState(false);
-  const [allocateAmount, setAllocateAmount] = useState(0);
-  const [isAllocateMode, setIsAllocateMode] = useState(false);
-
-  // called when budget is selected in allocate mode
   const allocateMode = async (id) => {
     console.log("allocateMode called with id:", id);
     if (items.length === 0) {
@@ -548,12 +423,6 @@ const Budget = () => {
     }
   };
 
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const editDrawerModal = useRef(null);
-  const [editDrawerData, setEditDrawerData] = useState(null);
-  const [editModalSelectedId, setEditModalSelectedId] = useState(-1);
-  const [deleteOptionChecked, setDeleteOptionChecked] = useState(false);
-
   const editBudget = async (item) => {
     console.log("editBudget called with item:", item);
     setEditDrawerData(item);
@@ -566,21 +435,129 @@ const Budget = () => {
     // setEditModalSelectedId(id);
   };
 
-  const [setupComplete, setSetupComplete] = useState(false);
-
-  const checkBudgetSetup = async () => {
-    const response = await getPreferences();
-    // if cache key doesn't exist, call db and store value to cache
-    if (response.budgetOnboardComplete === null) {
-      setSetupComplete(false);
-      response.budgetOnboardComplete = false;
-      await updatePreferences(response);
-    } else if (response.budgetOnboardComplete === true) {
-      setSetupComplete(true);
-    } else if (response.budgetOnboardComplete === false) {
-      setSetupComplete(false);
-    }
+  const addItem = (id, name, color, progress, goal, start, end) => {
+    setItems([
+      ...items,
+      {
+        id: id,
+        name: name,
+        color: color,
+        progress: progress,
+        goal: goal,
+        start: start,
+        end: end,
+      },
+    ]);
   };
+
+  const removeItem = (id) => {
+    setItems(items.filter((item) => item.id !== id));
+  };
+
+  const setSetupCompleteTrue = () => {
+    console.log("Setup completed, setting setupComplete to true");
+    setSetupComplete(true);
+  };
+
+  const {
+    data: budgets,
+    refetch,
+    error,
+    isFetching,
+    isStale,
+  } = useQuery({
+    queryKey: queryKeys.budgets.list(user?.$id),
+    queryFn: async () => {
+      console.log(
+        "🔄 [QUERY] Fetching budgets with react-query for user",
+        user?.$id
+      );
+      if (!user) {
+        console.error("ERROR: user is null/undefined in budget query");
+        throw new Error("User is not available");
+      }
+      const result = await getBudgets(user);
+      console.log("🔄 [QUERY] Budgets fetched successfully:", {
+        count: result?.length || 0,
+        userId: user?.$id,
+        timestamp: new Date().toISOString(),
+      });
+      return result;
+    },
+    enabled: !!user, // Only run query when user is available
+    // Add more debugging info
+    notifyOnChangeProps: ["data", "error", "isFetching", "isStale"],
+  });
+
+  // Create mutation for budget creation with automatic invalidation
+  const createBudgetMutation = useMutation({
+    mutationFn: async (budgetData) => {
+      console.log("🚀 [MUTATION] Creating budget with data:", {
+        title: budgetData.title,
+        goal: budgetData.goal,
+        userId: user?.$id,
+      });
+
+      const result = await createBudgetDb(
+        budgetData.title,
+        budgetData.goal,
+        budgetData.goalTime,
+        user,
+        budgetData.repeating,
+        budgetData.repeatingFrequency,
+        budgetData.color,
+        budgetData.started
+      );
+
+      console.log("🚀 [MUTATION] Budget created successfully:", {
+        budgetId: result?.$id,
+        title: result?.title,
+      });
+
+      return result;
+    },
+    onSuccess: (newBudget) => {
+      console.log("✅ [MUTATION] Budget created, invalidating queries...");
+      // Invalidate budgets query to trigger automatic refetch
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.budgets.list(user?.$id),
+      });
+
+      logEvent(events.CREATE_BUDGET);
+      setIsBudgetOpen(false);
+
+      console.log("✅ [MUTATION] Query invalidation triggered successfully");
+    },
+    onError: (error) => {
+      console.error("❌ [MUTATION] Budget creation failed:", error);
+      Alert.alert("Error", "Failed to create budget. Please try again.");
+    },
+  });
+
+  // Extract mutation state for UI
+  const { isPending: createBudgetLoading } = createBudgetMutation;
+
+  // Log query state changes
+  useEffect(() => {
+    console.log("📊 [QUERY STATE] Budgets query state changed:", {
+      hasData: !!budgets,
+      dataLength: budgets?.length || 0,
+      isFetching,
+      isStale,
+      error: error?.message || null,
+      user: user?.$id,
+      timestamp: new Date().toISOString(),
+    });
+  }, [budgets, error, user, isFetching, isStale]);
+
+  // Log query state changes
+  useEffect(() => {
+    console.log("Query budgets state changed:", {
+      data: budgets,
+      error,
+      user: user?.$id,
+    });
+  }, [budgets, error, user]);
 
   // startup functions
   useEffect(() => {
@@ -624,16 +601,47 @@ const Budget = () => {
     }
   }, [error]);
 
-  const setSetupCompleteTrue = () => {
-    console.log("Setup completed, setting setupComplete to true");
-    setSetupComplete(true);
-  };
-
-  // animation refs
-  const selectBudgetAnimationRef = useRef(null);
+  // Early returns
+  if (!isLoggedIn) {
+    console.log("Early return: not logged in");
+    return (
+      <SafeAreaView
+        className="bg-primary h-full px-5 pt-5"
+        edges={["right", "top", "left"]}
+      >
+        <View className="flex-1 justify-center items-center gap-10">
+          <View>
+            <Text className="font-psemibold text-center text-2xl text-white">
+              Log in to Mintable to create budgets.
+            </Text>
+            <Text className="font-pregular text-center text-rg text-gray-500 mt-5">
+              We ask you to log in to securely save and sync your budget data
+              across devices. We never share your information.
+            </Text>
+          </View>
+          <View className="w-full">
+            <CButton
+              title={"Log In"}
+              handlePress={() => router.push("/sign-in")}
+            />
+            <CButton
+              title={"Try as Guest"}
+              containerStyles={"mt-3 border-2 border-gray-600"}
+              containerColor={"bg-primary"}
+              textColor={"text-gray-600"}
+              handlePress={() => router.push("/budgetDemo")}
+            />
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!setupComplete) {
-    console.log("Setup not complete, showing BudgetSetup");
+    console.log(
+      "Early return: setup not complete, setupComplete =",
+      setupComplete
+    );
     return <BudgetSetup update={setSetupCompleteTrue} />;
   }
 

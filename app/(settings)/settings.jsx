@@ -162,13 +162,26 @@ const Settings = () => {
               containerColor={"bg-red-500"}
               containerStyles={"mt-8"}
               handlePress={async () => {
-                const r = await logOut();
-                if (r) {
-                  router.replace("/");
-                  setIsLoggedIn(false);
-                  setUser(null);
-                } else {
-                  Alert.alert("Error", "Something went wrong");
+                console.log("LOGOUT: Starting logout process");
+                try {
+                  console.log("LOGOUT: Calling logOut()");
+                  const r = await logOut();
+                  console.log("LOGOUT: logOut() result:", r);
+                  if (r) {
+                    console.log("LOGOUT: Navigation to home");
+                    router.replace("/");
+                    console.log("LOGOUT: Setting isLoggedIn to false");
+                    setIsLoggedIn(false);
+                    console.log("LOGOUT: Setting user to null");
+                    setUser(null);
+                    console.log("LOGOUT: Logout complete");
+                  } else {
+                    console.log("LOGOUT: Error occurred, showing alert");
+                    Alert.alert("Error", "Something went wrong");
+                  }
+                } catch (error) {
+                  console.log("LOGOUT: Exception caught:", error);
+                  Alert.alert("Error", "Logout failed");
                 }
               }}
             />
