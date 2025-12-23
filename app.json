@@ -3,7 +3,7 @@
     "name": "Mintable",
     "slug": "mintable",
     "scheme": "mintable",
-    "version": "1.0.7",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -53,7 +53,8 @@
         "expo-build-properties",
         {
           "ios": {
-            "privacyManifestAggregationEnabled": true
+            "privacyManifestAggregationEnabled": true,
+            "deploymentTarget": "16.0"
           },
           "android": {
             "enableProguardInReleaseBuilds": true,
@@ -69,7 +70,8 @@
           "userTrackingPermission": "This app uses device identifiers to track marketing attribution and app usage."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "./withAndroidContentManifestFix.js"
     ],
     "extra": {
       "router": {
