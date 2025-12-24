@@ -1,4 +1,10 @@
-import { View, StyleSheet, Text } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Text,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from "react-native";
 import React, { forwardRef, useCallback, useMemo } from "react";
 import { BottomSheetBackdrop, BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -27,8 +33,8 @@ const DrawerModal = forwardRef((props, ref) => {
       onDismiss={props.onDismiss}
       backgroundStyle={{ backgroundColor: props.backgroundColor ?? "white" }}
       handleIndicatorStyle={{ backgroundColor: "#203c56" }}
-      keyboardBehavior={"fillParent"}
-      enableDynamicSizing={true}
+      keyboardBehavior={"interactive"}
+      enableDynamicSizing={false}
       topInset={insets.top}
       {...props}
     >
@@ -37,7 +43,9 @@ const DrawerModal = forwardRef((props, ref) => {
           Bottom Modal 😎
         </Text>
       </BottomSheetView> */}
-      {props.children}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        {props.children}
+      </TouchableWithoutFeedback>
     </BottomSheetModal>
   );
 });

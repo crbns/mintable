@@ -76,8 +76,8 @@ const RootLayout = () => {
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <BottomSheetModalProvider>
-            <GlobalProvider>
+          <GlobalProvider>
+            <BottomSheetModalProvider>
               <NetworkProvider>
                 <ForceUpdateGate>
                   <Stack
@@ -116,8 +116,8 @@ const RootLayout = () => {
                   </Stack>
                 </ForceUpdateGate>
               </NetworkProvider>
-            </GlobalProvider>
-          </BottomSheetModalProvider>
+            </BottomSheetModalProvider>
+          </GlobalProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>
     </QueryClientProvider>

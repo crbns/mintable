@@ -33,6 +33,7 @@ const ConfirmDrawerModal = forwardRef(
         onDismiss={dismissed}
         backgroundColor="#0d2b45"
         stackBehavior="push"
+        snapPoints={["30%"]}
       >
         <BottomSheetView className="flex align-center pb-10 px-5">
           <View className="w-full items-center justify-center relative">

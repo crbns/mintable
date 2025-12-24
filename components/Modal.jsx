@@ -1,20 +1,40 @@
-import { View, KeyboardAvoidingView, Platform } from "react-native";
+import {
+  View,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from "react-native";
 import {
   BottomSheetModal,
   BottomSheetView,
   BottomSheetBackdrop,
 } from "@gorhom/bottom-sheet";
 import { useRef, useMemo, useEffect, useCallback } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const Modal = ({ isOpen, withInput, children, onRequestClose, ...rest }) => {
+const Modal = ({
+  isOpen,
+  withInput,
+  children,
+  onRequestClose,
+  snapPoints: customSnapPoints,
+  enableDynamicSizing = false,
+  ...rest
+}) => {
   const modalRef = useRef(null);
-  const snapPoints = useMemo(() => ["90%"], []);
+  const snapPoints = useMemo(
+    () => customSnapPoints || ["90%"],
+    [customSnapPoints]
+  );
+  const insets = useSafeAreaInsets();
 
   const renderBackdrop = useCallback(
     (props) => (
       <BottomSheetBackdrop
         appearsOnIndex={0}
         disappearsOnIndex={-1}
+        onPress={() => Keyboard.dismiss()}
         {...props}
       />
     ),
@@ -38,22 +58,14 @@ const Modal = ({ isOpen, withInput, children, onRequestClose, ...rest }) => {
       handleIndicatorStyle={{ backgroundColor: "#203c56" }}
       onDismiss={onRequestClose}
       backdropComponent={renderBackdrop}
+      keyboardBehavior={Platform.OS === "ios" ? "interactive" : "extend"}
+      keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustResize"
+      enableDynamicSizing={enableDynamicSizing}
+      topInset={insets.top}
       {...rest}
     >
-      <BottomSheetView className="flex-1">
-        <View className="flex-1">
-          {withInput ? (
-            <KeyboardAvoidingView
-              className=""
-              behavior={Platform.OS === "ios" ? "padding" : "height"}
-            >
-              {children}
-            </KeyboardAvoidingView>
-          ) : (
-            <View className="px-3">{children}</View>
-          )}
-        </View>
-      </BottomSheetView>
+      <BottomSheetView className="flex-1 px-3">{children}</BottomSheetView>
     </BottomSheetModal>
   );
 };

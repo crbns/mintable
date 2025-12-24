@@ -256,6 +256,21 @@ const EditBudgetDrawerModal = forwardRef(
     const deleteBudgetMutation = useMutation({
       mutationFn: async (id) => {
         console.log("[MUTATION] Deleting budget:", id);
+        // Fetch the budget to get the progress amount
+        const budget = await getBudgetByDocId(user, id);
+        const progress = budget.progress || 0;
+        // Get current virtual balance
+        const vBalanceDocs = await getVirtualBalance(user);
+        const currentBalance = vBalanceDocs[0]?.balance || 0;
+        const updateFreq = vBalanceDocs[0]?.updateFreq || 0;
+        const updateAmount = vBalanceDocs[0]?.updateAmount || 0;
+        // Update virtual balance by adding the progress amount
+        await updateVirtualBalance(
+          currentBalance + progress,
+          updateFreq,
+          updateAmount
+        );
+        // Proceed with deletion
         const result = await deleteBudget(id);
         console.log("[MUTATION] Budget deleted successfully");
         return result;
@@ -287,7 +302,12 @@ const EditBudgetDrawerModal = forwardRef(
     }, [confirmFormReturn]);
 
     return (
-      <DrawerModal ref={ref} onDismiss={dismissed} backgroundColor="#0d2b45">
+      <DrawerModal
+        ref={ref}
+        onDismiss={dismissed}
+        backgroundColor="#0d2b45"
+        snapPoints={["90%"]}
+      >
         <BottomSheetView className="flex align-center pb-10">
           <View className="w-full items-center justify-center relative">
             <TouchableOpacity

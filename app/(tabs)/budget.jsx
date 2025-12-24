@@ -17,13 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import BudgetContainer from "../../components/BudgetContainer";
 import CButton from "../../components/CButton";
 import IconButton from "../../components/IconButton";
-import Modal from "../../components/Modal";
-import FormField from "../../components/FormField";
-import DropDownPicker from "react-native-dropdown-picker";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import DropDown from "../../components/DropDown";
-import BouncyCheckbox from "react-native-bouncy-checkbox";
-import RNDateTimePicker from "@react-native-community/datetimepicker";
 import {
   useQuery,
   useMutation,
@@ -45,16 +39,16 @@ import {
 } from "../../lib/appwrite";
 import images from "../../constants/images";
 import ContentLoader, { Facebook, Rect } from "react-content-loader/native";
-import SmallError from "../../components/SmallError";
 import BudgetSetup from "../../components/BudgetSetup";
 import { loadFromCache, storeToCache, CACHE_KEYS } from "../../lib/cacheUtil";
 import eventBus from "../../lib/eventBus";
 import { router } from "expo-router";
 import { useGlobalContext } from "../../context/GlobalProvider";
 import { useIsFocused } from "@react-navigation/native";
-import LottieView from "lottie-react-native";
 import DrawerModal from "../../components/DrawerModal";
 import EditBudgetDrawerModal from "../../components/EditBudgetDrawerModal";
+import AllocateModal from "../../components/AllocateModal";
+import CreateBudgetModal from "../../components/CreateBudgetModal";
 import { BottomSheetView } from "@gorhom/bottom-sheet";
 import { events, logEvent } from "../../lib/appsflyer";
 import * as SecureStore from "expo-secure-store";
@@ -174,54 +168,6 @@ const Budget = () => {
   ]);
 
   const [dateTimePickerShown, setDateTimePickerShown] = useState(false);
-  const dateTimeCompoenent = Platform.select({
-    ios: () => (
-      <RNDateTimePicker
-        testID="dateTimePicker"
-        value={budgetForm.goalTime}
-        minimumDate={new Date()}
-        mode="date"
-        onChange={(e, selectedDate) => {
-          if (e.type == "set") {
-            const currentDate = selectedDate;
-            setDateTimePickerShown(false);
-            budgetForm.goalTime = currentDate;
-          }
-        }}
-        textColor="gray"
-        accentColor="orange"
-      />
-    ),
-    android: () => (
-      <>
-        <TouchableOpacity
-          onPress={() => setDateTimePickerShown(true)}
-          className="flex-row gap-2"
-          activeOpacity={0.8}
-        >
-          <Text className="text-gray-100 font-pregular text-lg bg-alt-100 rounded-md p-2">
-            Select a Date
-          </Text>
-          <Text className="text-gray-100 font-pregular text-lg bg-alt-100 rounded-md p-2">
-            {budgetForm.goalTime.toLocaleDateString()}
-          </Text>
-        </TouchableOpacity>
-        {dateTimePickerShown && (
-          <RNDateTimePicker
-            testID="dateTimePicker"
-            value={budgetForm.goalTime}
-            minimumDate={new Date()}
-            mode="date"
-            onChange={(e, selectedDate) => {
-              const currentDate = selectedDate;
-              setDateTimePickerShown(false);
-              budgetForm.goalTime = currentDate;
-            }}
-          />
-        )}
-      </>
-    ),
-  });
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -725,93 +671,16 @@ const Budget = () => {
           />
         </View>
 
-        {/* Allocate Modal */}
-        <Modal
+        <AllocateModal
           isOpen={allocateModalOpen}
-          withInput
-          onRequestClose={() => setAllocateModalOpen(false)}
-        >
-          <View className="flex align-center pb-10 w-full">
-            <View className="items-center justify-center relative flex-row">
-              <Text className="font-psemibold text-white text-xl text-center">
-                Allocate Money
-              </Text>
-              <TouchableOpacity
-                className="absolute right-4"
-                onPress={() => {
-                  console.log("Allocate modal close button pressed");
-                  setAllocateModalOpen(false);
-                  setIsAllocateMode(false);
-                }}
-              >
-                <MaterialCommunityIcons name="close" size={22} color={"gray"} />
-              </TouchableOpacity>
-            </View>
-
-            <View className="bg-primary w-full pt-4 px-4 rounded-xl ">
-              <Text className="font-pregular text-md text-white">
-                {`You have $${virtualBalance} to allocate.`}
-              </Text>
-
-              <FormField
-                title={"Set amount to allocate"}
-                handleChangeText={(e) => setAllocateAmount(parseInt(e))}
-                otherStyles={"mt-1"}
-                placeholder={"Set amount"}
-                inputMode={"numeric"}
-                otherChildren=<View className="items-center justify-center h-full mr-1">
-                  <Text className="font-pregular text-secondary text-2xl">
-                    $
-                  </Text>
-                </View>
-              />
-
-              {virtualBalance - allocateAmount < 0 && (
-                <SmallError text={"Number cannot excede amount to allocate"} />
-              )}
-
-              {allocateAmount && (
-                <Text className="font-pregular text-md text-white mt-1">
-                  You will have $
-                  {virtualBalance - allocateAmount < 0
-                    ? 0
-                    : virtualBalance - allocateAmount}{" "}
-                  remaining.
-                </Text>
-              )}
-
-              <CButton
-                title={"Select Budget"}
-                containerStyles={"mt-3"}
-                handlePress={() => {
-                  if (virtualBalance - allocateAmount >= 0) {
-                    selectBudgetAnimationRef.current?.play();
-                    setTimeout(() => {
-                      setAllocateModalOpen(false);
-                    }, 1000);
-                    setIsAllocateMode(true);
-                  }
-                }}
-              />
-            </View>
-
-            <LottieView
-              source={require("../../assets/animations/coins_explode.json")}
-              ref={selectBudgetAnimationRef}
-              style={{
-                width: 200,
-                height: 200,
-                position: "absolute",
-                bottom: -60,
-                alignSelf: "center",
-                zIndex: 10,
-                pointerEvents: "none",
-              }}
-              autoPlay={false}
-              loop={false}
-            />
-          </View>
-        </Modal>
+          onClose={() => setAllocateModalOpen(false)}
+          virtualBalance={virtualBalance}
+          allocateAmount={allocateAmount}
+          setAllocateAmount={setAllocateAmount}
+          setIsAllocateMode={setIsAllocateMode}
+          selectBudgetAnimationRef={selectBudgetAnimationRef}
+          items={items}
+        />
 
         {isAllocateMode && (
           <Text className="mt-5 text-white font-psemibold">
@@ -878,212 +747,40 @@ const Budget = () => {
           handlePress={() => setIsBudgetOpen(true)}
         />
 
-        {/* Create Budget Modal */}
-        <Modal
+        <CreateBudgetModal
           isOpen={isBudgetOpen}
-          withInput
-          onRequestClose={() => {
-            console.log("Create budget modal closed");
-            setIsBudgetOpen(false);
-          }}
-        >
-          <View className="flex align-center pb-10 w-full">
-            <View className="items-center justify-center relative flex-row">
-              <Text className="font-psemibold text-white text-xl text-center">
-                Create Budget
-              </Text>
-              <TouchableOpacity
-                className="absolute right-4"
-                onPress={() => setIsBudgetOpen(false)}
-              >
-                <MaterialCommunityIcons name="close" size={22} color={"gray"} />
-              </TouchableOpacity>
-            </View>
+          onClose={() => setIsBudgetOpen(false)}
+          budgetForm={budgetForm}
+          setBudgetForm={setBudgetForm}
+          colorDropdownOpen={colorDropdownOpen}
+          setColorDropdownOpen={setColorDropdownOpen}
+          colorDropdownValue={colorDropdownValue}
+          setColorDropdownValue={setColorDropdownValue}
+          colorDropDownItems={colorDropDownItems}
+          setColorDropDownItems={setColorDropDownItems}
+          frequencyDropdownOpen={frequencyDropdownOpen}
+          setFrequencyDropdownOpen={setFrequencyDropdownOpen}
+          frequencyDropdownValue={frequencyDropdownValue}
+          setFrequencyDropdownValue={setFrequencyDropdownValue}
+          frequencyDropdownItems={frequencyDropdownItems}
+          setFrequencyDropdownItems={setFrequencyDropdownItems}
+          dateTimePickerShown={dateTimePickerShown}
+          setDateTimePickerShown={setDateTimePickerShown}
+          createBudget={createBudget}
+          createBudgetLoading={createBudgetLoading}
+        />
 
-            <View className="bg-primary w-full pt-4 px-4 rounded-xl ">
-              <FormField
-                title="Title"
-                handleChangeText={(e) =>
-                  setBudgetForm({ ...budgetForm, title: e })
-                }
-                otherStyles={"my-1"}
-                placeholder={"Give it a title"}
-              />
-
-              <FormField
-                title="Goal"
-                handleChangeText={(e) =>
-                  setBudgetForm({ ...budgetForm, goal: parseInt(e) })
-                }
-                otherStyles={"my-1"}
-                inputMode={"numeric"}
-                placeholder={"What is the goal"}
-                otherChildren=<View className="items-center justify-centerh-full mr-1">
-                  <Text className="font-pregular text-secondary text-2xl">
-                    $
-                  </Text>
-                </View>
-              />
-
-              <DropDown
-                open={colorDropdownOpen}
-                value={colorDropdownValue}
-                items={colorDropDownItems}
-                setOpen={setColorDropdownOpen}
-                setValue={setColorDropdownValue}
-                setItems={setColorDropDownItems}
-                title={"Color"}
-                placeholder={"Select a Color"}
-                containerStyles={"my-1"}
-                zIndex={10000}
-              />
-
-              <View className="flex-row w-full my-1 h-20">
-                {/* <View className="items-center justify-center mx-2">
-                <Text className="text-gray-100 font-pmedium text-base mb-1">
-                  Repeating?
-                </Text>
-                <BouncyCheckbox
-                  className="mt-1"
-                  onPress={(checked) =>
-                    setBudgetForm({ ...budgetForm, repeating: checked })
-                  }
-                />
-              </View> */}
-                <View className="flex-1 ml-2">
-                  {budgetForm.repeating ? (
-                    <DropDown
-                      open={frequencyDropdownOpen}
-                      value={frequencyDropdownValue}
-                      items={frequencyDropdownItems}
-                      setOpen={setFrequencyDropdownOpen}
-                      setValue={setFrequencyDropdownValue}
-                      setItems={setFrequencyDropdownItems}
-                      placeholder={"How often?"}
-                      title={"Frequency"}
-                      zIndex={1999}
-                    />
-                  ) : (
-                    <>
-                      <Text className="text-base text-gray-100 font-pmedium">
-                        Choose a due date
-                      </Text>
-                      <View className="flex-1 justify-center items-start">
-                        {dateTimeCompoenent()}
-                      </View>
-                    </>
-                  )}
-                </View>
-              </View>
-
-              <CButton
-                containerStyles={"mt-2"}
-                title={"Create"}
-                handlePress={createBudget}
-                isWorking={createBudgetLoading}
-              />
-            </View>
-          </View>
-        </Modal>
-
-        {/* Edit modal */}
-        <Modal
+        {/* <EditBudgetModal
           isOpen={editModalOpen}
-          onRequestClose={() => {
-            console.log("Edit modal closed");
-            setEditModalOpen(false);
-            setDeleteOptionChecked(false);
-          }}
-        >
-          <View className="bg-primary w-full p-4 rounded-md">
-            <View className="flex-row align-middle items-center">
-              <Text className="flex-1 text-white font-psemibold text-xl px-1">
-                Edit Budget
-              </Text>
-              <TouchableOpacity
-                className="items-end"
-                onPress={() => {
-                  setEditModalOpen(false);
-                  setDeleteOptionChecked(false);
-                }}
-              >
-                <MaterialCommunityIcons name="close" color={"gray"} size={32} />
-              </TouchableOpacity>
-            </View>
-            <View className="flex-row mt-1 items-center justify-evenly">
-              <TouchableOpacity
-                className="items-center justify-center border-2 rounded-md p-2 border-alt-100"
-                activeOpacity={0.8}
-              >
-                <Image
-                  source={images.pencil}
-                  className="w-[50px] h-[50px]"
-                  resizeMode="contain"
-                />
-                <Text className="text-white">Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="items-center justify-center border-2 rounded-md p-2 border-alt-100"
-                activeOpacity={0.8}
-                onPress={() => setDeleteOptionChecked(!deleteOptionChecked)}
-              >
-                <Image
-                  source={images.trash}
-                  className="w-[50px] h-[50px]"
-                  resizeMode="contain"
-                />
-                <Text className="text-white">Delete</Text>
-              </TouchableOpacity>
-            </View>
-            {deleteOptionChecked && (
-              // TODO: could be animated here
-              <View className="mt-2">
-                <Text className="text-white font-psemibold mb-5 pt-2 mt-2 border-t-hairline">
-                  Are you sure?
-                </Text>
-                <View className="flex-row justify-evenly gap-5">
-                  <CButton
-                    title={"Yes"}
-                    containerColor={"flex-1 bg-red-500"}
-                    handlePress={async () => {
-                      // Get the budget to retrieve progress
-                      const budget = await getBudgetByDocId(
-                        user,
-                        editModalSelectedId
-                      );
-                      const progress = budget.progress;
-                      const response = await deleteBudget(editModalSelectedId);
-                      if (response == true) {
-                        // Get current virtual balance
-                        const vBal = await getVirtualBalance(user);
-                        // const newBalance = vBal[0].balance + progress;
-                        // Update virtual balance
-                        await updateVirtualBalance(virtualBalance + progress);
-                        setEditModalOpen(false);
-                        setDeleteOptionChecked(false);
-                        Alert.alert(
-                          "Success!",
-                          "Successfully deleted your budget"
-                        );
-                        onRefresh();
-                      } else {
-                        Alert.alert("Error", "Something went wrong");
-                      }
-                    }}
-                  />
-                  <CButton
-                    title={"No"}
-                    containerColor={"flex-1 border-2 rounded-md border-alt-100"}
-                    textColor={"text-gray-500"}
-                    handlePress={() => {
-                      setDeleteOptionChecked(false);
-                    }}
-                  />
-                </View>
-              </View>
-            )}
-          </View>
-        </Modal>
+          onClose={() => setEditModalOpen(false)}
+          editModalSelectedId={editModalSelectedId}
+          deleteOptionChecked={deleteOptionChecked}
+          setDeleteOptionChecked={setDeleteOptionChecked}
+          user={user}
+          onRefresh={onRefresh}
+          virtualBalance={virtualBalance}
+          setEditModalOpen={setEditModalOpen}
+        /> */}
       </ScrollView>
       <EditBudgetDrawerModal
         ref={editDrawerModal}
