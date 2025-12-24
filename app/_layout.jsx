@@ -18,6 +18,7 @@ import "react-native-reanimated";
 import { useReviewPrompter } from "../lib/useReviewPrompter";
 
 import Constants from "expo-constants";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -63,11 +64,13 @@ const RootLayout = () => {
 
   // TODO: add store urls
   useReviewPrompter({
-    minLaunches: 5,
-    cooldownDays: 14,
+    minLaunches: 1,
+    cooldownDays: 0,
     feedbackUrl: "https://forms.gle/QJW1saoLRsZe1mgB7",
     storeUrlIOS:
       "https://apps.apple.com/us/app/mintable-budget-learn/id6745320066",
+    storeUrlAndroid:
+      "https://play.google.com/store/apps/details?id=com.isaac.mintable",
   });
 
   if (!fontsLoaded && !error) return null;

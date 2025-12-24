@@ -40,12 +40,12 @@ async function daysSince(dateISO?: string | null) {
 
 export function useReviewPrompter(opts: Options = {}) {
   const {
-    minLaunches = 5,
-    cooldownDays = 14,
+    minLaunches,
+    cooldownDays,
     storeUrlIOS,
     storeUrlAndroid,
     feedbackUrl = "https://forms.gle/QJW1saoLRsZe1mgB7",
-    suppressInDev = true,
+    suppressInDev = false,
   } = opts;
 
   const appState = useRef(AppState.currentState);
@@ -72,7 +72,6 @@ export function useReviewPrompter(opts: Options = {}) {
       maybePrompt();
     }, 1200);
     return () => sub.remove();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function maybePrompt() {
@@ -86,10 +85,20 @@ export function useReviewPrompter(opts: Options = {}) {
         getBool(KEYS.leftReview),
       ]);
 
+    console.log("ReviewPrompter state:", {
+      launches,
+      lastPromptISO,
+      dismissedForever,
+      leftReview,
+      minLaunches,
+      cooldownDays,
+    });
+
     if (dismissedForever || leftReview) return;
     if (launches < minLaunches) return;
 
     const since = await daysSince(lastPromptISO);
+    console.log("Days since last prompt:", since);
     if (since < cooldownDays) return;
 
     await AsyncStorage.setItem(KEYS.lastPromptAt, new Date().toISOString());
@@ -100,7 +109,6 @@ export function useReviewPrompter(opts: Options = {}) {
     Alert.alert("Enjoying the app?", "Your feedback helps us improve.", [
       { text: "Not really", onPress: () => showFeedbackPrompt() },
       { text: "Yes", onPress: () => showReviewPrompt() },
-      { text: "Ask me later", style: "cancel" },
     ]);
   }
 
@@ -118,17 +126,13 @@ export function useReviewPrompter(opts: Options = {}) {
             } catch {}
           },
         },
-        {
-          text: "Do not ask again",
-          onPress: async () => setBool(KEYS.dismissedForever, true),
-        },
       ]
     );
   }
 
   async function showReviewPrompt() {
     try {
-      const available = await StoreReview.isAvailableAsync();
+      const available = Platform.OS === "ios" ? StoreReview.hasAction() : true;
       if (available) {
         await StoreReview.requestReview();
         await setBool(KEYS.leftReview, true);
