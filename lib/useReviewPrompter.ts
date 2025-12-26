@@ -45,7 +45,7 @@ export function useReviewPrompter(opts: Options = {}) {
     storeUrlIOS,
     storeUrlAndroid,
     feedbackUrl = "https://forms.gle/QJW1saoLRsZe1mgB7",
-    suppressInDev = false,
+    suppressInDev = true,
   } = opts;
 
   const appState = useRef(AppState.currentState);

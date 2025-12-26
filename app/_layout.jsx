@@ -64,8 +64,8 @@ const RootLayout = () => {
 
   // TODO: add store urls
   useReviewPrompter({
-    minLaunches: 1,
-    cooldownDays: 0,
+    minLaunches: 4,
+    cooldownDays: 14,
     feedbackUrl: "https://forms.gle/QJW1saoLRsZe1mgB7",
     storeUrlIOS:
       "https://apps.apple.com/us/app/mintable-budget-learn/id6745320066",
