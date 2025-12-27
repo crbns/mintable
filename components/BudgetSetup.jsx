@@ -394,7 +394,7 @@ const BudgetSetup = ({ update }) => {
           </View>
         )}
         {/* </ScrollView> */}
-        <View className="flex-row flex-1 justify-end items-end p-5 gap-4">
+        <View className="flex-row justify-center items-center p-5 gap-4 mt-10">
           {step > 1 && (
             <CButton
               title={"Back"}
