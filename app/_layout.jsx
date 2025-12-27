@@ -3,6 +3,7 @@ import { Slot, SplashScreen, Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import "../global.css";
 import React, { useEffect } from "react";
+import * as SystemUI from "expo-system-ui";
 
 import GlobalProvider from "../context/GlobalProvider";
 import NetworkProvider from "../components/NetworkProvider";
@@ -60,6 +61,11 @@ const RootLayout = () => {
     );
 
     appsFlyer.startSdk();
+  }, []);
+
+  // Fix plain white background
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync("#0d2b45");
   }, []);
 
   // TODO: add store urls

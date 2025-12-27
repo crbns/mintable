@@ -28,6 +28,7 @@ const AppleSignIn = () => {
       if (!res) {
         console.error("Sign in error: no returning value from appwrite.");
         Alert.alert("Error", "Sign-In failed. Please try again.");
+        setIsWorking(false);
         return;
       }
 
