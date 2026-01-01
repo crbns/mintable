@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import React from "react";
+import * as Progress from "react-native-progress";
 
 const OutlineButton = ({
   title,
@@ -7,6 +8,7 @@ const OutlineButton = ({
   containerStyles,
   textStyles,
   isDisabled,
+  progress,
 }) => {
   return (
     <TouchableOpacity
@@ -22,6 +24,20 @@ const OutlineButton = ({
       >
         {title}
       </Text>
+      {/* Progress bar at the bottom */}
+      {progress !== undefined && (
+        <View className="absolute bottom-0 left-0 right-0">
+          <Progress.Bar
+            progress={progress}
+            width={null}
+            height={4}
+            color="#10b981"
+            unfilledColor="transparent"
+            borderWidth={0}
+            borderRadius={0}
+          />
+        </View>
+      )}
     </TouchableOpacity>
   );
 };

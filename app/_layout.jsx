@@ -121,6 +121,10 @@ const RootLayout = () => {
                       name="(demo)"
                       options={{ headerShown: false }}
                     />
+                    <Stack.Screen
+                      name="(stats)"
+                      options={{ headerShown: false }}
+                    />
                   </Stack>
                 </ForceUpdateGate>
               </NetworkProvider>

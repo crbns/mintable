@@ -11,9 +11,9 @@ const createConfig = () => {
   };
 
   config.resolver = {
-    ...resolver,
-    assetExts: resolver.assetExts.filter((ext) => ext !== "svg"),
-    sourceExts: [...resolver.sourceExts, "svg"],
+    ...config.resolver,
+    assetExts: config.resolver.assetExts.filter((ext) => ext !== "svg").concat("lottie"),
+    sourceExts: [...config.resolver.sourceExts, "svg"],
   };
 
   return config;
