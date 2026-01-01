@@ -206,6 +206,18 @@ const Home = () => {
                 size={28}
               />
             </TouchableOpacity>
+            {process.env.EXPO_PUBLIC_DEBUG_MODE === "true" && (
+              <TouchableOpacity
+                className="items-end mr-2"
+                onPress={() => router.push("debug")}
+              >
+                <MaterialCommunityIcons
+                  name="bug-outline"
+                  color={"gray"}
+                  size={28}
+                />
+              </TouchableOpacity>
+            )}
           </View>
           <View className="h-1 bg-alt-100 rounded-full" />
 
