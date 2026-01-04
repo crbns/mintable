@@ -3,7 +3,7 @@
     "name": "Mintable",
     "slug": "mintable",
     "scheme": "appwrite-callback-6778bfe40010ede410ec",
-    "version": "1.1.2",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -64,10 +64,7 @@
           }
         }
       ],
-      [
-        "react-native-appsflyer",
-        {}
-      ],
+      ["react-native-appsflyer", {}],
       [
         "expo-tracking-transparency",
         {
