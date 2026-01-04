@@ -34,8 +34,6 @@ const AppleSignIn = () => {
 
       const user = await getCurrentUser();
 
-      console.log("user: ", user);
-
       setUser(user);
       setIsLoggedIn(true);
 
@@ -59,8 +57,7 @@ const AppleSignIn = () => {
         <View
           className="bg-black rounded-xl h-[50px] justify-center items-center"
           style={{ marginTop: 14, cornerRadius: 12 }}
-        >
-          <ActivityIndicator color={"#fff"} />
+        > <ActivityIndicator color={"#fff"} />
         </View>
       ) : (
         <AppleAuthentication.AppleAuthenticationButton

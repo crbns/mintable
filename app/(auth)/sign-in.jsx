@@ -10,7 +10,6 @@ import {
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, router } from "expo-router";
-import * as AppleAuthentication from "expo-apple-authentication";
 
 import images from "../../constants/images";
 import FormField from "../../components/FormField";
@@ -20,6 +19,7 @@ import { useGlobalContext } from "../../context/GlobalProvider";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { events, logEvent } from "../../lib/appsflyer";
 import AppleSignIn from "../../components/AppleSignIn.ios";
+import GoogleSignIn from "../../components/GoogleSignIn";
 
 const SignIn = () => {
   const { setIsLoggedIn, setUser } = useGlobalContext();
@@ -100,6 +100,7 @@ const SignIn = () => {
           {/* very temporary solution, however i think it is best for now */}
           {Platform.OS === "ios" && <AppleSignIn />}
 
+          <GoogleSignIn />
           <View className="justify-center pt-5 flex-row gap-2">
             <Text className="text-lg text-gray-100 font-pregular">
               Don't have an account?
