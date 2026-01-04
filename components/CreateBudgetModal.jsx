@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   Platform,
   TextInput,
+  Keyboard,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Modal from "./Modal";
@@ -85,6 +86,13 @@ const CreateBudgetModal = ({
     ),
   });
 
+  const handleColorDropdownOpen = (open) => {
+    if (open) {
+      Keyboard.dismiss();
+    }
+    setColorDropdownOpen(open);
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -138,7 +146,7 @@ const CreateBudgetModal = ({
             open={colorDropdownOpen}
             value={colorDropdownValue}
             items={colorDropDownItems}
-            setOpen={setColorDropdownOpen}
+            setOpen={handleColorDropdownOpen}
             setValue={setColorDropdownValue}
             setItems={setColorDropDownItems}
             title={"Color"}

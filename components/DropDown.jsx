@@ -56,9 +56,13 @@ const DropDown = ({
         backgroundStyle={{ backgroundColor: "#203c56" }}
         handleIndicatorStyle={{ backgroundColor: "#7b7b8b" }}
         onDismiss={() => setOpen(false)}
+        stackBehavior="push"
         containerStyle={{ zIndex: 10000 }}
       >
         <BottomSheetView className="flex-1 p-4">
+          <Text className="text-2xl font-psemibold text-white mb-4 border-b-hairline pb-2 border-secondary">
+            Select {title}:
+          </Text>
           <FlatList
             data={items}
             keyExtractor={(item) => item.value}

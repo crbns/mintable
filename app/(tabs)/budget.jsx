@@ -15,6 +15,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import BudgetContainer from "../../components/BudgetContainer";
+import BudgetVirtualBalance from "../../components/BudgetVirtualBalance";
 import CButton from "../../components/CButton";
 import IconButton from "../../components/IconButton";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -328,7 +329,7 @@ const Budget = () => {
       if (excessAllocated) {
         Alert.alert(
           "Your budget is overflowing with money!",
-          "The extra amount allocated to your budget as been deposted back into your virtual balance."
+          "The extra amount allocated to your budget has been deposted back into your virtual balance."
         );
       }
 
@@ -471,6 +472,22 @@ const Budget = () => {
 
       logEvent(events.CREATE_BUDGET);
       setIsBudgetOpen(false);
+
+      // Reset form states
+      setBudgetForm({
+        title: null,
+        goal: null,
+        goalTime: new Date(),
+        started: new Date(),
+        repeating: false,
+        repeatingFrequency: null,
+        color: null,
+      });
+      setColorDropdownOpen(false);
+      setColorDropdownValue(null);
+      setFrequencyDropdownOpen(false);
+      setFrequencyDropdownValue(null);
+      setDateTimePickerShown(false);
 
       console.log("✅ [MUTATION] Query invalidation triggered successfully");
     },
@@ -643,33 +660,22 @@ const Budget = () => {
           </TouchableOpacity> */}
           {/* TODO: Will be implemented later on */}
         </View>
-        <View className="border-2 border-b-4 border-alt-100 p-3 rounded-xl mt-3">
-          <Text className="text-white font-psemibold">Virtual Balance</Text>
-          {refreshing ? (
-            <ActivityIndicator />
-          ) : (
-            <Text className="text-5xl font-plight text-white pt-3">
-              ${virtualBalance}
-            </Text>
-          )}
-          <CButton
-            title={"Allocate"}
-            containerColor={"bg-alt-100"}
-            textColor={"text-white"}
-            textWeight={"font-pregular"}
-            handlePress={() => {
-              console.log("Allocate button pressed, items:", items.length);
-              if (items.length === 0) {
-                Alert.alert(
-                  "Error",
-                  "You need to have at least one budget to allocate money to!"
-                );
-              } else if (!isAllocateMode) {
-                setAllocateModalOpen(true);
-              }
-            }}
-          />
-        </View>
+        <BudgetVirtualBalance
+          refreshing={refreshing}
+          virtualBalance={virtualBalance}
+          onPress={() => {
+            console.log("Allocate button pressed, items:", items.length);
+            if (items.length === 0) {
+              Alert.alert(
+                "Error",
+                "You need to have at least one budget to allocate money to!"
+              );
+            } else if (!isAllocateMode) {
+              setAllocateModalOpen(true);
+            }
+          }}
+          containerStyles={""}
+        />
 
         <AllocateModal
           isOpen={allocateModalOpen}
@@ -737,16 +743,6 @@ const Budget = () => {
           />
         </View> */}
 
-        <Text className="text-white text-center font-pregular text-lg mt-10">
-          Create a new budget
-        </Text>
-        <IconButton
-          iconName={"plus"}
-          containerColor={"bg-alt-100"}
-          containerStyles={"mt-3 mb-10"}
-          handlePress={() => setIsBudgetOpen(true)}
-        />
-
         <CreateBudgetModal
           isOpen={isBudgetOpen}
           onClose={() => setIsBudgetOpen(false)}
@@ -782,6 +778,14 @@ const Budget = () => {
           setEditModalOpen={setEditModalOpen}
         /> */}
       </ScrollView>
+      <View className="absolute bottom-24 right-5 pb-2">
+        <IconButton
+          iconName={"plus"}
+          containerColor={"bg-secondary"}
+          containerStyles={"w-14 h-14"}
+          handlePress={() => setIsBudgetOpen(true)}
+        />
+      </View>
       <EditBudgetDrawerModal
         ref={editDrawerModal}
         budget={editDrawerData}

@@ -197,7 +197,7 @@ const BudgetDemo = () => {
       if (excessAllocated) {
         Alert.alert(
           "Your budget is overflowing with money!",
-          "The extra amount allocated to your budget as been deposted back into your virtual balance."
+          "The extra amount allocated to your budget has been deposted back into your virtual balance."
         );
       }
     } catch (error) {

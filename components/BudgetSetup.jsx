@@ -118,7 +118,10 @@ const BudgetSetup = ({ update }) => {
   const [addAmount, setAddAmount] = useState(null);
   const [startAmount, setStartAmount] = useState(null);
 
+  const [isWorking, setIsWorking] = useState(false);
+
   const handleFinish = async () => {
+    setIsWorking(true);
     // handle null values, surely this is sufficent
     if (!frequencyDropdownValue || !startAmount || !addAmount) {
       Alert.alert("Error", "Please fill out all fields");
@@ -130,6 +133,7 @@ const BudgetSetup = ({ update }) => {
       dateFreqDropdownValue === null
     ) {
       Alert.alert("Error", "Please fill out all fields");
+      setIsWorking(false);
       return;
     }
 
@@ -150,6 +154,7 @@ const BudgetSetup = ({ update }) => {
       parseInt(addAmount)
     );
 
+    setIsWorking(false);
     router.replace("budget");
     update();
   };
@@ -417,6 +422,7 @@ const BudgetSetup = ({ update }) => {
               title={"Done"}
               textWeight={"font-pregular"}
               containerStyles={"flex-1"}
+              isWorking={isWorking}
               handlePress={() => handleFinish()}
             />
           )}

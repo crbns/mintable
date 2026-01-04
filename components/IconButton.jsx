@@ -18,7 +18,7 @@ const IconButton = ({
       activeOpacity={0.7}
       className={`${
         containerColor ?? "bg-secondary"
-      } rounded-xl justify-center min-h-[50px] items-center ${containerStyles} ${
+      } rounded-xl justify-center items-center ${containerStyles} ${
         disabledd ? "opacity-50" : ""
       }`}
       disabled={disabledd}
