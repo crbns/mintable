@@ -6,7 +6,7 @@ import {
   Alert,
   TouchableOpacity,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, router } from "expo-router";
 
@@ -23,6 +23,9 @@ import { events, logEvent } from "../../lib/appsflyer";
 const SignUp = () => {
   const { setUser, setIsLoggedIn } = useGlobalContext();
 
+  const emailRegex =
+    /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/;
+
   const [form, setForm] = useState({
     username: "",
     email: "",
@@ -31,15 +34,17 @@ const SignUp = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pwdValid, setPwdValid] = useState(true);
   const [userValid, setUserValid] = useState(true);
+  const [isEmailValid, setIsEmailValid] = useState(true);
   const [regUserValid, setRegUserValid] = useState(true);
 
   const submit = async () => {
     if (
       !form.username ||
       !form.email ||
-      !form.password
+      !form.password ||
       // !form.firstName ||
       // !form.lastName
+      !isEmailValid
     ) {
       Alert.alert("Error", "Please fill in all the fields");
       return;
@@ -61,6 +66,13 @@ const SignUp = () => {
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    if (form.email === "") {
+      return;
+    }
+    setIsEmailValid(emailRegex.test(form.email));
+  }, [form.email]);
 
   return (
     <SafeAreaView className="bg-primary h-full">
@@ -124,6 +136,10 @@ const SignUp = () => {
             otherStyles="mt-3"
             keyboardType="email-address"
           />
+
+          {!isEmailValid ? (
+            <SmallError text="Please enter a valid email address" />
+          ) : null}
 
           <FormField
             title="Password"
