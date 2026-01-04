@@ -32,7 +32,7 @@ const BudgetVirtualBalance = ({
     >
       {daysUntilRefresh && (
         <View className="absolute top-2 right-2 bg-alt-100 rounded-full px-2 py-1">
-          <Text className="text-white text-rg font-pregular">
+          <Text className="text-white text-sm font-pregular">
             Updates in: {daysUntilRefresh}{" "}
             {daysUntilRefresh === 1 ? "day" : "days"}
           </Text>

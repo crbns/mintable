@@ -23,7 +23,12 @@ const GoogleSignIn = () => {
     try {
       const res = await googleOAuthSession();
 
-      if (!res || res.searchParams.has("error")) {
+      if (!res) {
+        setIsWorking(false);
+        return;
+      }
+
+      if (res.searchParams.has("error")) {
         Alert.alert("Error", "Sign-In failed. Please try again.");
         setIsWorking(false);
         return;

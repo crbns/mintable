@@ -97,10 +97,6 @@ const SignIn = () => {
             isWorking={isSubmitting}
           />
 
-          {/* very temporary solution, however i think it is best for now */}
-          {Platform.OS === "ios" && <AppleSignIn />}
-
-          <GoogleSignIn />
           <View className="justify-center pt-5 flex-row gap-2">
             <Text className="text-lg text-gray-100 font-pregular">
               Don't have an account?
@@ -112,6 +108,14 @@ const SignIn = () => {
               Sign Up
             </Link>
           </View>
+
+          {/* very temporary solution, however i think it is best for now */}
+          <View className="mt-10 border-t-hairline border-t-alt-100" />
+
+          {/* FIXME: is very slow sometimes */}
+          {Platform.OS === "ios" && <AppleSignIn />}
+
+          <GoogleSignIn />
         </View>
       </ScrollView>
     </SafeAreaView>

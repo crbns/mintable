@@ -131,9 +131,9 @@ const Home = () => {
   const { data: preferences } = useQuery({
     queryKey: queryKeys.preferences.current(),
     queryFn: async () => {
-      console.log("🔄 [QUERY] Fetching preferences");
+      console.log("[QUERY] Fetching preferences");
       const result = await getPreferences();
-      console.log("🔄 [QUERY] Preferences fetched:", result);
+      console.log("[QUERY] Preferences fetched:", result);
       return result;
     },
   });

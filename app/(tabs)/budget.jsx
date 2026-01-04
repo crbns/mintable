@@ -55,9 +55,7 @@ import { events, logEvent } from "../../lib/appsflyer";
 import * as SecureStore from "expo-secure-store";
 
 const Budget = () => {
-  console.log("Budget component render start");
   const { user, isLoggedIn } = useGlobalContext();
-  console.log("Budget render: isLoggedIn =", isLoggedIn, "user =", !!user);
   const queryClient = useQueryClient();
   const isFocused = useIsFocused();
 
@@ -416,7 +414,7 @@ const Budget = () => {
     queryKey: queryKeys.budgets.list(user?.$id),
     queryFn: async () => {
       console.log(
-        "🔄 [QUERY] Fetching budgets with react-query for user",
+        "[QUERY] Fetching budgets with react-query for user",
         user?.$id
       );
       if (!user) {
@@ -424,7 +422,7 @@ const Budget = () => {
         throw new Error("User is not available");
       }
       const result = await getBudgets(user);
-      console.log("🔄 [QUERY] Budgets fetched successfully:", {
+      console.log("[QUERY] Budgets fetched successfully:", {
         count: result?.length || 0,
         userId: user?.$id,
         timestamp: new Date().toISOString(),
@@ -502,7 +500,7 @@ const Budget = () => {
 
   // Log query state changes
   useEffect(() => {
-    console.log("📊 [QUERY STATE] Budgets query state changed:", {
+    console.log("[QUERY STATE] Budgets query state changed:", {
       hasData: !!budgets,
       dataLength: budgets?.length || 0,
       isFetching,
@@ -608,10 +606,6 @@ const Budget = () => {
     return <BudgetSetup update={setSetupCompleteTrue} />;
   }
 
-  console.log(
-    "Rendering main budget screen with setupComplete:",
-    setupComplete
-  );
   return (
     <SafeAreaView
       className="bg-primary h-full  pt-5"
