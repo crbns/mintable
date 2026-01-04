@@ -1,15 +1,19 @@
 import { OAuthProvider, Query } from "react-native-appwrite";
 import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from "expo-auth-session";
-import { account, avatars, databases, functions, appwriteConfig } from "../lib/appwrite";
+import {
+  account,
+  avatars,
+  databases,
+  functions,
+  appwriteConfig,
+} from "../lib/appwrite";
 import { createUserDB } from "./userService";
 
 export const googleOAuthSession = async () => {
   try {
     const deepLink = new URL(makeRedirectUri({ preferLocalhost: true }));
     const scheme = `${deepLink.protocol}//`;
-
-    console.log(deepLink);
 
     const loginUrl = await account.createOAuth2Token({
       provider: OAuthProvider.Google,
@@ -19,21 +23,29 @@ export const googleOAuthSession = async () => {
 
     const res = await WebBrowser.openAuthSessionAsync(`${loginUrl}`, scheme);
 
+    if (res.type !== "success") {
+      if (res.type === "cancel" || res.type === "dismiss") {
+        console.log("OAuth session cancelled by user");
+        return null;
+      }
+      throw new Error(`OAuth session failed with type: ${res.type}`);
+    }
+
     const url = new URL(res.url);
     console.log(url);
 
-    if (url.searchParams.has('error')) {
-      console.error("Auth error:", url.searchParams.get('error'));
+    if (url.searchParams.has("error")) {
+      console.error("Auth error:", url.searchParams.get("error"));
       return url;
     }
 
-    const secret = url.searchParams.get('secret');
-    const userId = url.searchParams.get('userId');
+    const secret = url.searchParams.get("secret");
+    const userId = url.searchParams.get("userId");
 
     await account.createSession({
       userId,
-      secret
-    })
+      secret,
+    });
 
     // check if user exists in user collection
 
@@ -43,7 +55,7 @@ export const googleOAuthSession = async () => {
       appwriteConfig.databaseId,
       appwriteConfig.userCollectionId,
       [Query.equal("accountId", [userId])]
-    )
+    );
 
     console.log("userIdCheck: ", userIdCheck);
 
@@ -55,8 +67,7 @@ export const googleOAuthSession = async () => {
       const name = user.name;
       const email = user.email;
 
-      const res = await createUserDB(name, email, userId);
-      if (!res) return false;
+      await createUserDB(name, email, userId);
     }
 
     return url;
@@ -64,4 +75,4 @@ export const googleOAuthSession = async () => {
     console.error(error.message);
     throw new Error(error.message);
   }
-}
+};
