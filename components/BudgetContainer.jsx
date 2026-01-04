@@ -1,5 +1,5 @@
-import { View, Text, TouchableOpacity } from "react-native";
-import React, { useEffect, useState } from "react";
+import { View, Text, Pressable } from "react-native";
+import React, { useEffect, useState, useRef } from "react";
 import * as Progress from "react-native-progress";
 
 const BudgetContainer = ({
@@ -18,6 +18,8 @@ const BudgetContainer = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [timeLeft, setTimeLeft] = useState(timeUntil(end));
+  const pressStartRef = useRef(null);
+  const isScrollingRef = useRef(false);
 
   const progressPercent = progress / goal;
 
@@ -56,12 +58,12 @@ const BudgetContainer = ({
 
   return (
     <>
-      <TouchableOpacity
-        onPressOut={() => {
-          console.log("BudgetContainer onPressOut called");
+      <Pressable
+        onPress={() => {
+          console.log("BudgetContainer onPress called");
           onPress();
         }}
-        activeOpacity={0.8}
+        android_ripple={{ color: "rgba(255, 255, 255, 0.1)" }}
       >
         <View
           className={`flex-row justify-center items-center mt-2 ${containerStyles}`}
@@ -97,7 +99,7 @@ const BudgetContainer = ({
         />
 
         <View className="border-t-2 border-alt-100 mt-2" />
-      </TouchableOpacity>
+      </Pressable>
     </>
   );
 };

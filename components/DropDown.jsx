@@ -15,7 +15,7 @@ const DropDown = ({
   zIndex,
 }) => {
   const bottomSheetModalRef = useRef(null);
-  const snapPoints = useMemo(() => ["50%"], []);
+  const snapPoints = useMemo(() => [], []);
 
   useEffect(() => {
     if (open) {
@@ -58,6 +58,7 @@ const DropDown = ({
         onDismiss={() => setOpen(false)}
         stackBehavior="push"
         containerStyle={{ zIndex: 10000 }}
+        enableDynamicSizing
       >
         <BottomSheetView className="flex-1 p-4">
           <Text className="text-2xl font-psemibold text-white mb-4 border-b-hairline pb-2 border-secondary">
