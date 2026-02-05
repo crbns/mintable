@@ -74,7 +74,7 @@ const Budget = () => {
       console.log("📱 [FOCUS] Screen focused, checking if refetch needed...");
       // Check if query exists and is stale
       const queryState = queryClient.getQueryState(
-        queryKeys.budgets.list(user.$id)
+        queryKeys.budgets.list(user.$id),
       );
       const isStale = queryState?.isStale || false;
 
@@ -291,7 +291,7 @@ const Budget = () => {
     if (items.length === 0) {
       Alert.alert(
         "Error",
-        "You need to have at least one budget to allocate money to!"
+        "You need to have at least one budget to allocate money to!",
       );
       setIsAllocateMode(false);
       // reset allocate amount saving myself from future bugs
@@ -321,13 +321,13 @@ const Budget = () => {
       const result = await updateBudget(id, newProgress);
       // edit amount to allocate
       const newVB = await updateVirtualBalance(
-        virtualBalance - amountToSubtract
+        virtualBalance - amountToSubtract,
       );
 
       if (excessAllocated) {
         Alert.alert(
           "Your budget is overflowing with money!",
-          "The extra amount allocated to your budget has been deposted back into your virtual balance."
+          "The extra amount allocated to your budget has been deposted back into your virtual balance.",
         );
       }
 
@@ -338,7 +338,7 @@ const Budget = () => {
         const today = new Date().getDay();
 
         const budgetContributions = JSON.parse(
-          await loadFromCache(CACHE_KEYS.budgetContributions)
+          await loadFromCache(CACHE_KEYS.budgetContributions),
         );
         const before = parseInt(budgetContributions.values[today]);
         const newAmount = before + amountToSubtract;
@@ -346,7 +346,7 @@ const Budget = () => {
         const budgetContributionsString = JSON.stringify(budgetContributions);
         await storeToCache(
           CACHE_KEYS.budgetContributions,
-          budgetContributionsString
+          budgetContributionsString,
         );
         eventBus.emit("newContribution", budgetContributionsString);
         // Alert.alert(
@@ -415,7 +415,7 @@ const Budget = () => {
     queryFn: async () => {
       console.log(
         "[QUERY] Fetching budgets with react-query for user",
-        user?.$id
+        user?.$id,
       );
       if (!user) {
         console.error("ERROR: user is null/undefined in budget query");
@@ -451,7 +451,7 @@ const Budget = () => {
         budgetData.repeating,
         budgetData.repeatingFrequency,
         budgetData.color,
-        budgetData.started
+        budgetData.started,
       );
 
       console.log("🚀 [MUTATION] Budget created successfully:", {
@@ -601,7 +601,7 @@ const Budget = () => {
   if (!setupComplete) {
     console.log(
       "Early return: setup not complete, setupComplete =",
-      setupComplete
+      setupComplete,
     );
     return <BudgetSetup update={setSetupCompleteTrue} />;
   }
@@ -652,7 +652,7 @@ const Budget = () => {
           {/* <TouchableOpacity onPress={() => router.push("history")}>
             <MaterialCommunityIcons name="history" size={32} color={"gray"} />
           </TouchableOpacity> */}
-          {/* TODO: Will be implemented later on */}
+          {/* Will be implemented later on */}
         </View>
         <BudgetVirtualBalance
           refreshing={refreshing}
@@ -662,7 +662,7 @@ const Budget = () => {
             if (items.length === 0) {
               Alert.alert(
                 "Error",
-                "You need to have at least one budget to allocate money to!"
+                "You need to have at least one budget to allocate money to!",
               );
             } else if (!isAllocateMode) {
               setAllocateModalOpen(true);
@@ -706,7 +706,7 @@ const Budget = () => {
                 onPress={() => {
                   console.log(
                     "BudgetContainer onPress called for item:",
-                    item.id
+                    item.id,
                   );
                   if (isAllocateMode) {
                     allocateMode(item.id);

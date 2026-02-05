@@ -57,7 +57,7 @@ const RootLayout = () => {
       },
       (err) => {
         console.error("AppsFlyer: ", err);
-      }
+      },
     );
 
     appsFlyer.startSdk();
@@ -68,7 +68,6 @@ const RootLayout = () => {
     SystemUI.setBackgroundColorAsync("#0d2b45");
   }, []);
 
-  // TODO: add store urls
   useReviewPrompter({
     minLaunches: 4,
     cooldownDays: 14,
