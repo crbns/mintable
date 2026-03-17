@@ -320,7 +320,7 @@ const Learn = () => {
             More lessons coming soon!
           </Text>
 
-          <Text className="text-center text-alt-100 font-pregular text-base mt-3 mb-10">
+          <Text className="text-center text-gray-400 font-pregular text-base mt-3 mb-10">
             We're constantly adding new lessons to help you master budgeting and
             financial literacy.
           </Text>

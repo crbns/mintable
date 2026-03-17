@@ -1,5 +1,11 @@
-import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { Text, ActivityIndicator, Pressable } from "react-native";
 import React from "react";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withSequence,
+} from "react-native-reanimated";
 
 const CButton = ({
   title,
@@ -12,8 +18,30 @@ const CButton = ({
   disabledd,
   isWorking,
 }) => {
+  const scale = useSharedValue(1);
+  const translateY = useSharedValue(0);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }, { translateY: translateY.value }],
+    };
+  });
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
+    translateY.value = withSpring(2, { damping: 15, stiffness: 300 });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSequence(
+      withSpring(1.05, { damping: 15, stiffness: 300 }),
+      withSpring(1, { damping: 15, stiffness: 300 })
+    );
+    translateY.value = withSpring(0, { damping: 15, stiffness: 300 });
+  };
+
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={handlePress}
       activeOpacity={0.7}
       className={`${containerColor ?? "bg-secondary"
@@ -31,7 +59,7 @@ const CButton = ({
           {title}
         </Text>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 
