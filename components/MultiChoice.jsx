@@ -1,5 +1,10 @@
 import { View, Text } from "react-native";
 import React, { useEffect, useState } from "react";
+import Animated, {
+  FadeInDown,
+  Easing,
+  useReducedMotion,
+} from "react-native-reanimated";
 import OutlineButton from "./OutlineButton";
 import {
   CorrectAnswerAnimation,
@@ -18,6 +23,7 @@ const MultiChoice = ({
   setAnswered,
   isShowingFeedback,
 }) => {
+  const reduceMotion = useReducedMotion();
   // const [answered, setAnswered] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
@@ -37,7 +43,10 @@ const MultiChoice = ({
   return (
     <View className={`${containerStyles}`}>
       <View className={`flex-row gap-2 flex-1`}>
-        <View className="relative flex-1">
+        <Animated.View
+          className="relative flex-1"
+          entering={reduceMotion ? undefined : FadeInDown.delay(0).duration(200).easing(Easing.out(Easing.cubic))}
+        >
           <OutlineButton
             title={titles[0]}
             handlePress={() => {
@@ -75,8 +84,11 @@ const MultiChoice = ({
               {showWrongAnimation && <WrongAnswerAnimation size="small" />}
             </View>
           )}
-        </View>
-        <View className="relative flex-1">
+        </Animated.View>
+        <Animated.View
+          className="relative flex-1"
+          entering={reduceMotion ? undefined : FadeInDown.delay(50).duration(200).easing(Easing.out(Easing.cubic))}
+        >
           <OutlineButton
             title={titles[1]}
             handlePress={() => {
@@ -114,10 +126,13 @@ const MultiChoice = ({
               {showWrongAnimation && <WrongAnswerAnimation size="small" />}
             </View>
           )}
-        </View>
+        </Animated.View>
       </View>
       <View className={`flex-row gap-2 mt-2 flex-1`}>
-        <View className="relative flex-1">
+        <Animated.View
+          className="relative flex-1"
+          entering={reduceMotion ? undefined : FadeInDown.delay(100).duration(200).easing(Easing.out(Easing.cubic))}
+        >
           <OutlineButton
             title={titles[2]}
             handlePress={() => {
@@ -155,8 +170,11 @@ const MultiChoice = ({
               {showWrongAnimation && <WrongAnswerAnimation size="small" />}
             </View>
           )}
-        </View>
-        <View className="relative flex-1">
+        </Animated.View>
+        <Animated.View
+          className="relative flex-1"
+          entering={reduceMotion ? undefined : FadeInDown.delay(150).duration(200).easing(Easing.out(Easing.cubic))}
+        >
           <OutlineButton
             title={titles[3]}
             handlePress={() => {
@@ -194,7 +212,7 @@ const MultiChoice = ({
               {showWrongAnimation && <WrongAnswerAnimation size="small" />}
             </View>
           )}
-        </View>
+        </Animated.View>
       </View>
       {/* <OutlineButton
         title={"reset"}

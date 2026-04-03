@@ -4,7 +4,8 @@ import Animated, {
   FadeInRight,
   FadeOutLeft,
   FadeInDown,
-  SlideInUp,
+  Easing,
+  useReducedMotion,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MultiChoice from "../../components/MultiChoice";
@@ -24,6 +25,7 @@ import * as Progress from "react-native-progress";
 import images from "../../constants/images";
 
 const TakeQuiz = () => {
+  const reduceMotion = useReducedMotion();
   const [index, setIndex] = useState(0);
   const [answered, setAnswered] = useState(false);
   const [isShowingFeedback, setIsShowingFeedback] = useState(false);
@@ -245,7 +247,7 @@ const TakeQuiz = () => {
             />
             <Text className="text-white font-psemibold text-xl">Quiz</Text>
           </View>
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
             <MaterialCommunityIcons name="close" color="#9ca3af" size={24} />
           </TouchableOpacity>
         </View>
@@ -275,13 +277,13 @@ const TakeQuiz = () => {
       {shuffledQuestions && index < length ? (
         <Animated.View
           key={index}
-          entering={FadeInRight.duration(300)}
-          exiting={FadeOutLeft.duration(200)}
+          entering={reduceMotion ? undefined : FadeInRight.duration(300).easing(Easing.out(Easing.cubic))}
+          exiting={reduceMotion ? undefined : FadeOutLeft.duration(200).easing(Easing.out(Easing.cubic))}
           className="flex-1 px-5 pt-8"
         >
           {/* Question - Centered and Prominent */}
           <Animated.View
-            entering={FadeInDown.delay(100).duration(400)}
+            entering={reduceMotion ? undefined : FadeInDown.delay(80).duration(250).easing(Easing.out(Easing.cubic))}
             className="flex-1 justify-center items-center pb-8"
           >
             <Text className="text-white font-psemibold text-4xl text-center leading-tight">
@@ -291,7 +293,7 @@ const TakeQuiz = () => {
 
           {/* Answer Choices */}
           <Animated.View
-            entering={FadeInDown.delay(200).duration(400)}
+            entering={reduceMotion ? undefined : FadeInDown.delay(100).duration(200).easing(Easing.out(Easing.cubic))}
             className="flex-1 pb-5"
           >
             <MultiChoice

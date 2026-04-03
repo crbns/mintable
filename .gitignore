@@ -51,3 +51,6 @@ mintable_question_db.code-workspace
 
 plans/
 agents.md
+
+.claude/
+CLAUDE.md

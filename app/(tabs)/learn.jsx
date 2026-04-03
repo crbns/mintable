@@ -7,13 +7,13 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useGlobalContext } from "../../context/GlobalProvider";
-import { getLearningProgress } from "../../lib/appwrite";
+import { getLearningProgress, getLearningScores } from "../../lib/appwrite";
 import { queryKeys } from "../../lib/queryKeys";
 
 import images from "../../constants/images";
@@ -87,10 +87,29 @@ const Learn = () => {
     enabled: !!user && isLoggedIn,
   });
 
+  const { data: learningScores, refetch: refetchScores } = useQuery({
+    queryKey: queryKeys.scores.user(user?.$id),
+    queryFn: async () => {
+      if (!user) return null;
+      return await getLearningScores(user);
+    },
+    enabled: !!user && isLoggedIn,
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      if (user && isLoggedIn) {
+        refetchProgress();
+        refetchScores();
+      }
+    }, [user, isLoggedIn])
+  );
+
   const onRefresh = async () => {
     setRefreshing(true);
     try {
       await refetchProgress();
+      await refetchScores();
     } catch (error) {
       console.error("Error refreshing:", error);
     } finally {
@@ -119,8 +138,10 @@ const Learn = () => {
     });
   };
 
+  const progressDoc = learningProgress?.documents?.[0] ?? null;
+
   const getLessonStatus = (lessonId) => {
-    if (!learningProgress) {
+    if (!progressDoc) {
       return {
         isCompleted: false,
         isInProgress: false,
@@ -130,10 +151,8 @@ const Learn = () => {
       };
     }
 
-    const completedLessons = learningProgress.completedLessons || [];
-    const lessonScores = learningProgress.lessonScoresJSON
-      ? JSON.parse(learningProgress.lessonScoresJSON)
-      : [];
+    const completedLessons = progressDoc.completedLessons || [];
+    const lessonScores = learningScores?.documents ?? [];
 
     const fullLessonId = lessonId.includes("-") ? lessonId : `1-${lessonId}`;
     const isCompleted = completedLessons.includes(fullLessonId);
@@ -156,9 +175,7 @@ const Learn = () => {
   const getPreviousScore = (lessonId) => {
     if (!learningProgress) return null;
 
-    const lessonScores = learningProgress.lessonScoresJSON
-      ? JSON.parse(learningProgress.lessonScoresJSON)
-      : [];
+    const lessonScores = learningScores?.documents ?? [];
     const fullLessonId = lessonId.includes("-") ? lessonId : `1-${lessonId}`;
     return lessonScores.find((s) => s.lessonId === fullLessonId) || null;
   };
@@ -201,8 +218,8 @@ const Learn = () => {
     );
   }
 
-  const totalXP = learningProgress?.totalXP || 0;
-  const completedLessonsCount = learningProgress?.completedLessons?.length || 0;
+  const totalXP = progressDoc?.totalXP || 0;
+  const completedLessonsCount = progressDoc?.completedLessons?.length || 0;
 
   return (
     <SafeAreaView
