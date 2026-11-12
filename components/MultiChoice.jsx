@@ -22,16 +22,20 @@ const MultiChoice = ({
     }
   });
 
+  // only the first answer per question counts
+  const choose = (i) => {
+    if (answered) return;
+    setAnswered(true);
+    setSelectedIndex(i);
+    correctIndex === i ? onCorrect() : onIncorrect();
+  };
+
   return (
     <View className={`${containerStyles}`}>
       <View className={`flex-row gap-2 flex-1`}>
         <OutlineButton
           title={titles[0]}
-          handlePress={() => {
-            setAnswered(true);
-            setSelectedIndex(0);
-            correctIndex === 0 ? onCorrect() : onIncorrect();
-          }}
+          handlePress={() => choose(0)}
           containerStyles={
             answered && showCorrect
               ? 0 === correctIndex
@@ -49,11 +53,7 @@ const MultiChoice = ({
         />
         <OutlineButton
           title={titles[1]}
-          handlePress={() => {
-            setAnswered(true);
-            setSelectedIndex(1);
-            correctIndex === 1 ? onCorrect() : onIncorrect();
-          }}
+          handlePress={() => choose(1)}
           containerStyles={
             answered && showCorrect
               ? 1 === correctIndex
@@ -73,11 +73,7 @@ const MultiChoice = ({
       <View className={`flex-row gap-2 mt-2 flex-1`}>
         <OutlineButton
           title={titles[2]}
-          handlePress={() => {
-            setAnswered(true);
-            setSelectedIndex(2);
-            correctIndex === 2 ? onCorrect() : onIncorrect();
-          }}
+          handlePress={() => choose(2)}
           containerStyles={
             answered && showCorrect
               ? 2 === correctIndex
@@ -95,11 +91,7 @@ const MultiChoice = ({
         />
         <OutlineButton
           title={titles[3]}
-          handlePress={() => {
-            setAnswered(true);
-            setSelectedIndex(3);
-            correctIndex === 3 ? onCorrect() : onIncorrect();
-          }}
+          handlePress={() => choose(3)}
           containerStyles={
             answered && showCorrect
               ? 3 === correctIndex

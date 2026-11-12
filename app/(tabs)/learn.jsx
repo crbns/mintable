@@ -54,7 +54,10 @@ const Learn = () => {
         </View> */}
       </View>
       <View className="my-5 border-2 border-alt-100 rounded-md" />
-      <ScrollView className="w-full px-5">
+      <ScrollView
+        className="w-full px-5"
+        contentInsetAdjustmentBehavior="automatic"
+      >
         <View className="justify-center">
           <Text className="text-white font-psemibold text-left text-4xl">
             Budgeting

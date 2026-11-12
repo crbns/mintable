@@ -1,129 +1,64 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  TextInput as RNTextInput,
-  findNodeHandle,
-  TextInput,
-} from "react-native";
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import { View, Text, TouchableOpacity } from "react-native";
+import React, { forwardRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { useGlobalContext } from "../context/GlobalProvider";
+import BottomSheetTextInput from "../lib/bottomSheetTextInput";
 
 /**
  * BottomSheetFormField is a reusable component for form inputs in bottom sheets.
- * It handles keyboard interactions, focus/blur events for animated keyboard states,
- * and provides a consistent UI with optional password visibility toggle.
+ * BottomSheetTextInput reports focus/blur to the enclosing sheet so it can lift
+ * above the keyboard, so this must only be rendered inside a bottom sheet.
+ * Provides a consistent UI with optional password visibility toggle.
  */
-const BottomSheetFormField = ({
-  title,
-  value,
-  placeholder,
-  handleChangeText,
-  otherStyles,
-  inputMode,
-  otherChildren,
-  onFocus,
-  onBlur,
-  ...props
-}) => {
-  const { animatedKeyboardState } = useGlobalContext();
-  const [showPassword, setShowPassword] = useState(false);
-  const textInputRef = useRef(null);
-  const textInputNodesRef = useRef(new Set());
-
-  useEffect(() => {
-    if (textInputRef.current) {
-      const node = findNodeHandle(textInputRef.current);
-      textInputNodesRef.current.add(node);
-      return () => {
-        textInputNodesRef.current.delete(node);
-      };
-    }
-  }, []);
-
-  const handleOnFocus = useCallback(
-    (args) => {
-      const target = args.nativeEvent.target;
-      animatedKeyboardState.set((state) => ({
-        ...state,
-        target,
-      }));
-      if (onFocus) {
-        onFocus(args);
-      }
+const BottomSheetFormField = forwardRef(
+  (
+    {
+      title,
+      value,
+      placeholder,
+      handleChangeText,
+      otherStyles,
+      inputMode,
+      otherChildren,
+      ...props
     },
-    [onFocus, animatedKeyboardState]
-  );
-  const handleOnBlur = useCallback(
-    (args) => {
-      const target = args.nativeEvent.target;
-      const keyboardState = animatedKeyboardState.get();
-      const currentFocusedInput = findNodeHandle(
-        RNTextInput.State.currentlyFocusedInput()
-      );
+    ref
+  ) => {
+    const [showPassword, setShowPassword] = useState(false);
 
-      /**
-       * we need to make sure that we only remove the target
-       * if the target belong to the current component and
-       * if the currently focused input is not in the targets set.
-       */
-      const shouldRemoveCurrentTarget = keyboardState.target === target;
-      const shouldIgnoreBlurEvent =
-        currentFocusedInput &&
-        textInputNodesRef.current.has(currentFocusedInput);
+    return (
+      <View className={`space-y-2 ${otherStyles}`}>
+        <Text className="text-base text-gray-100 font-pmedium mx-2">
+          {title}
+        </Text>
 
-      if (shouldRemoveCurrentTarget && !shouldIgnoreBlurEvent) {
-        animatedKeyboardState.set((state) => ({
-          ...state,
-          target: undefined,
-        }));
-      }
+        <View className="w-full h-14 px-4 focus:border-secondary items-center flex-row border-b-2 border-alt-100">
+          {otherChildren}
+          <BottomSheetTextInput
+            ref={ref}
+            className="flex-1 text-white font-psemibold text-base h-full"
+            value={value}
+            placeholder={placeholder}
+            placeholderTextColor="#9fb0c3"
+            accessibilityLabel={title}
+            onChangeText={handleChangeText}
+            secureTextEntry={title === "Password" && !showPassword}
+            inputMode={inputMode}
+            {...props}
+          />
 
-      if (onBlur) {
-        onBlur(args);
-      }
-    },
-    [onBlur, animatedKeyboardState, textInputNodesRef]
-  );
-
-  return (
-    <View className={`space-y-2 ${otherStyles}`}>
-      <Text className="text-base text-gray-100 font-pmedium mx-2">{title}</Text>
-
-      <View className="w-full h-14 px-4 focus:border-secondary items-center flex-row border-b-2 border-alt-100">
-        {otherChildren}
-        <TextInput
-          ref={textInputRef}
-          className="flex-1 text-white font-psemibold text-base h-full"
-          value={value}
-          placeholder={placeholder}
-          placeholderTextColor="#7b7b8b"
-          onChangeText={handleChangeText}
-          onFocus={handleOnFocus}
-          onBlur={handleOnBlur}
-          secureTextEntry={title === "Password" && !showPassword}
-          inputMode={inputMode}
-        />
-
-        {title === "Password" && (
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            {/* <Image
-              source={!showPassword ? icons.eye : icons.eyeHide}
-              className="w-6 h-6"
-              resizeMode="contain"
-            /> */}
-            {!showPassword ? (
-              <Ionicons name="eye-off" size={20} color={"gray"} />
-            ) : (
-              <Ionicons name="eye" size={20} color="gray" />
-            )}
-          </TouchableOpacity>
-        )}
+          {title === "Password" && (
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              {!showPassword ? (
+                <Ionicons name="eye-off" size={20} color={"gray"} />
+              ) : (
+                <Ionicons name="eye" size={20} color="gray" />
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
-    </View>
-  );
-};
+    );
+  }
+);
 
 export default BottomSheetFormField;

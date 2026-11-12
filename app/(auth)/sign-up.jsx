@@ -159,7 +159,7 @@ const SignUp = () => {
                 userValid_,
                 regUserValid_ = false;
               pwdValid_ =
-                !(form.password.length < 8) || !(form.password.length > 256);
+                form.password.length >= 8 && form.password.length <= 256;
 
               regUserValid_ = USERNAME_REGEX.test(form.username);
 

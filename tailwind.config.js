@@ -18,6 +18,8 @@ module.exports = {
         gray: {
           100: "#CDCDE0",
         },
+        // secondary text on primary navy (~6.6:1 contrast)
+        muted: "#9fb0c3",
         alt: {
           100: "#203c56",
           200: "#1a3045",

@@ -11,6 +11,8 @@ const IconButton = ({
   containerColor,
   textStyles,
   disabledd,
+  style,
+  accessibilityLabel,
 }) => {
   return (
     <TouchableOpacity
@@ -22,6 +24,9 @@ const IconButton = ({
         disabledd ? "opacity-50" : ""
       }`}
       disabled={disabledd}
+      style={style}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
     >
       <MaterialCommunityIcons
         name={iconName ?? "abjad-arabic"}

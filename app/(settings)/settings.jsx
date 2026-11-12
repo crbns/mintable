@@ -6,7 +6,7 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,6 +14,7 @@ import { nativeApplicationVersion } from "expo-application";
 import CButton from "../../components/CButton";
 import { logOut, requestDeleteAccount } from "../../lib/appwrite";
 import { useGlobalContext } from "../../context/GlobalProvider";
+import { useQueryClient } from "@tanstack/react-query";
 import Modal from "../../components/Modal";
 
 const SETTINGS = [
@@ -83,7 +84,12 @@ const SETTINGS = [
 
 const Settings = () => {
   const { setUser, setIsLoggedIn, isLoggedIn, user } = useGlobalContext();
+  const queryClient = useQueryClient();
   const [deleteAccountModal, setDeleteAccountModal] = useState(false);
+  // the delete waits for the whole server function, so block a second tap
+  // before state catches up
+  const deletingRef = useRef(false);
+  const [deleting, setDeleting] = useState(false);
 
   return (
     <SafeAreaView className="bg-primary h-full px-5 pt-5">
@@ -120,7 +126,7 @@ const Settings = () => {
                               break;
                             case "redirect":
                               Linking.openURL(link);
-
+                              break;
                             default:
                               console.error(
                                 "No type set for settings object with id" +
@@ -174,6 +180,8 @@ const Settings = () => {
                     setIsLoggedIn(false);
                     console.log("LOGOUT: Setting user to null");
                     setUser(null);
+                    // drop cached server state so the next account starts clean
+                    queryClient.clear();
                     console.log("LOGOUT: Logout complete");
                   } else {
                     console.log("LOGOUT: Error occurred, showing alert");
@@ -199,7 +207,11 @@ const Settings = () => {
           </>
         )}
 
-        <Modal isOpen={deleteAccountModal}>
+        {/* swipe/backdrop close must reset the flag, or the sheet can't reopen */}
+        <Modal
+          isOpen={deleteAccountModal}
+          onRequestClose={() => setDeleteAccountModal(false)}
+        >
           <View className="bg-primary w-full p-4 rounded-md">
             <View className="flex flex-row items-center justify-center">
               <Text className="text-white font-bold text-center">
@@ -216,11 +228,25 @@ const Settings = () => {
               title={"I am sure"}
               containerColor={"bg-red-500"}
               containerStyles={"mt-8"}
+              isWorking={deleting}
+              disabledd={deleting}
               handlePress={async () => {
-                await requestDeleteAccount();
+                if (deletingRef.current) return;
+                deletingRef.current = true;
+                setDeleting(true);
+                try {
+                  await requestDeleteAccount();
+                } catch (error) {
+                  console.error("Delete account failed:", error);
+                  deletingRef.current = false;
+                  setDeleting(false);
+                  Alert.alert("Error", "Failed to delete account");
+                  return;
+                }
                 setDeleteAccountModal(false);
                 setIsLoggedIn(false);
                 setUser(null);
+                queryClient.clear();
                 router.replace("/");
               }}
             />

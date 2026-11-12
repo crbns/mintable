@@ -6,6 +6,7 @@ import {
   Badge,
 } from "expo-router/unstable-native-tabs";
 import { useEffect } from "react";
+import { Platform } from "react-native";
 import * as Haptics from "expo-haptics";
 
 const TabsLayout = () => {
@@ -20,9 +21,14 @@ const TabsLayout = () => {
 
   return (
     <NativeTabs
-      backgroundColor={"#0d2b45"}
-      disableTransparentOnScrollEdge
-      indicatorColor={"#203c56"}
+      // iOS keeps the system Liquid Glass bar; Android gets a themed Material bar
+      {...Platform.select({
+        android: {
+          backgroundColor: "#0d2b45",
+          indicatorColor: "#203c56",
+        },
+        default: {},
+      })}
     >
       <NativeTabs.Trigger name="home">
         <Label selectedStyle={{ color: "#ffaa5e" }}>Home</Label>

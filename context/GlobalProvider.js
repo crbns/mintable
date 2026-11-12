@@ -8,11 +8,6 @@ const GlobalProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [keyboardState, setKeyboardState] = useState({ target: undefined });
-  const animatedKeyboardState = {
-    get: () => keyboardState,
-    set: setKeyboardState,
-  };
 
   useEffect(() => {
     console.log("GLOBAL: getCurrentUser effect triggered");
@@ -49,7 +44,6 @@ const GlobalProvider = ({ children }) => {
         user,
         setUser,
         isLoading,
-        animatedKeyboardState,
       }}
     >
       {children}

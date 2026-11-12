@@ -129,7 +129,7 @@ const Home = () => {
 
   // Use React Query for preferences
   const { data: preferences } = useQuery({
-    queryKey: queryKeys.preferences.current(),
+    queryKey: queryKeys.preferences.current(user?.$id),
     queryFn: async () => {
       console.log("[QUERY] Fetching preferences");
       const result = await getPreferences();
@@ -189,7 +189,11 @@ const Home = () => {
       className="bg-primary h-full px-5 pt-5"
       edges={["right", "top", "left"]}
     >
-      <ScrollView className="h-full" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="h-full"
+        showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="automatic"
+      >
         <View className="justify-center">
           <View className="flex-row justify-center mb-2">
             <Text className="text-white font-psemibold text-left text-3xl items-start flex-1">

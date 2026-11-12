@@ -12,7 +12,6 @@ import { router } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import FormField from "../../components/FormField";
 import CButton from "../../components/CButton";
-import DropDown from "../../components/DropDown";
 import {
   getPreferences,
   updatePreferences,

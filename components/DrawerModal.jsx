@@ -1,66 +1,45 @@
-import {
-  View,
-  StyleSheet,
-  Text,
-  TouchableWithoutFeedback,
-  Keyboard,
-} from "react-native";
-import React, { forwardRef, useCallback, useMemo } from "react";
-import { BottomSheetBackdrop, BottomSheetModal } from "@gorhom/bottom-sheet";
+import React, { forwardRef, useCallback } from "react";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import SheetBackdrop from "./SheetBackdrop";
 
+// Ref-driven bottom sheet. Sizes to its content unless `snapPoints` are
+// passed. Children supply their own BottomSheetView / BottomSheetScrollView.
 const DrawerModal = forwardRef((props, ref) => {
-  const snapPoints = useMemo(() => props.snapPoints, []);
+  const {
+    snapPoints,
+    enableDynamicSizing = !snapPoints,
+    backgroundColor,
+    withInput,
+    children,
+    ...rest
+  } = props;
   const insets = useSafeAreaInsets();
 
   const renderBackdrop = useCallback(
-    (props) => (
-      <BottomSheetBackdrop
-        appearsOnIndex={0}
-        disappearsOnIndex={-1}
-        {...props}
-      />
-    ),
-    []
+    (props) => <SheetBackdrop {...props} withInput={withInput} />,
+    [withInput]
   );
 
   return (
     <BottomSheetModal
       ref={ref}
       index={0}
-      snapPoints={snapPoints ?? []}
+      snapPoints={snapPoints}
       backdropComponent={renderBackdrop}
-      onDismiss={props.onDismiss}
-      backgroundStyle={{ backgroundColor: props.backgroundColor ?? "white" }}
-      handleIndicatorStyle={{ backgroundColor: "#203c56" }}
-      keyboardBehavior={"interactive"}
-      enableDynamicSizing={false}
+      backgroundStyle={{ backgroundColor: backgroundColor ?? "white" }}
+      handleIndicatorStyle={{ backgroundColor: "#7b7b8b" }}
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustPan"
+      enableBlurKeyboardOnGesture={!!withInput}
+      enableDynamicSizing={enableDynamicSizing}
       topInset={insets.top}
-      {...props}
+      {...rest}
     >
-      {/* <BottomSheetView className="flex align-center bg-white">
-        <Text className="text-3xl text-center font-psemibold p-10">
-          Bottom Modal 😎
-        </Text>
-      </BottomSheetView> */}
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        {props.children}
-      </TouchableWithoutFeedback>
+      {children}
     </BottomSheetModal>
   );
-});
-
-const styles = StyleSheet.create({
-  contentContainer: {
-    flex: 1,
-    alignItems: "center",
-    backgroundColor: "white",
-  },
-  containerHeadline: {
-    fontSize: 24,
-    fontWeight: "600",
-    padding: 20,
-  },
 });
 
 export default DrawerModal;

@@ -7,7 +7,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CButton from "./CButton";
 import BudgetContainer from "./BudgetContainer";
@@ -16,12 +16,23 @@ import SmallInfo from "./SmallInfo";
 import FormField from "./FormField";
 import {
   createVirtualBalance,
+  getVirtualBalance,
+  linkVirtualBalance,
   updatePreferences,
   updateVirtualBalanceUpdateAmount,
 } from "../lib/appwrite";
 import { router } from "expo-router";
+import { useGlobalContext } from "../context/GlobalProvider";
+
+// amounts come from text fields as strings
+const parseAmount = (value) => parseInt(value, 10);
+const isPositiveAmount = (value) => {
+  const n = parseAmount(value);
+  return Number.isFinite(n) && n > 0;
+};
 
 const BudgetSetup = ({ update }) => {
+  const { user } = useGlobalContext();
   const [step, setStep] = useState(0);
   const totalSteps = 4;
 
@@ -54,8 +65,8 @@ const BudgetSetup = ({ update }) => {
         Alert.alert("Error", "Please fill out all fields");
         return;
       }
-      if (addAmount === 0) {
-        Alert.alert("Error", "Amount cannot be zero");
+      if (!isPositiveAmount(addAmount)) {
+        Alert.alert("Error", "Enter an amount greater than zero");
         return;
       }
     } else if (step === 3) {
@@ -63,8 +74,8 @@ const BudgetSetup = ({ update }) => {
         Alert.alert("Error", "Please fill out all fields");
         return;
       }
-      if (startAmount === 0) {
-        Alert.alert("Error", "Amount cannot be zero");
+      if (!isPositiveAmount(startAmount)) {
+        Alert.alert("Error", "Enter an amount greater than zero");
         return;
       }
     }
@@ -119,12 +130,20 @@ const BudgetSetup = ({ update }) => {
   const [startAmount, setStartAmount] = useState(null);
 
   const [isWorking, setIsWorking] = useState(false);
+  // state updates land a render late; the ref blocks a second tap right away
+  const finishingRef = useRef(false);
 
   const handleFinish = async () => {
-    setIsWorking(true);
-    // handle null values, surely this is sufficent
-    if (!frequencyDropdownValue || !startAmount || !addAmount) {
+    if (finishingRef.current) return;
+
+    const start = parseAmount(startAmount);
+    const add = parseAmount(addAmount);
+    if (!frequencyDropdownValue || startAmount == null || addAmount == null) {
       Alert.alert("Error", "Please fill out all fields");
+      return;
+    }
+    if (!isPositiveAmount(startAmount) || !isPositiveAmount(addAmount)) {
+      Alert.alert("Error", "Enter amounts greater than zero");
       return;
     }
     if (
@@ -133,27 +152,49 @@ const BudgetSetup = ({ update }) => {
       dateFreqDropdownValue === null
     ) {
       Alert.alert("Error", "Please fill out all fields");
+      return;
+    }
+    finishingRef.current = true;
+    setIsWorking(true);
+
+    try {
+      // create virtual balance first so a failure never marks setup complete;
+      // skip it on a retry where an earlier attempt already created one.
+      // A failed read throws here, so it is never mistaken for "no doc yet".
+      const existing = await getVirtualBalance(user, { throwOnError: true });
+      if (!existing.length) {
+        const vBalance = await createVirtualBalance(
+          start,
+          frequencyDropdownValue,
+          add
+        );
+        if (!vBalance) throw new Error("Virtual balance was not created");
+      } else {
+        // an earlier attempt may have created the doc but not linked it to the
+        // user doc. docs[0] is the linked doc if there is one, else the oldest,
+        // the same one every reader uses.
+        await linkVirtualBalance(existing[0].$id);
+      }
+
+      await updatePreferences({
+        budgetOnboardComplete: true,
+        // updateFreq: frequencyDropdownValue,
+        // updateFreqDate: dateFreqDropdownValue,
+        startAmount: startAmount,
+        // addAmount: addAmount,
+      });
+    } catch (error) {
+      console.error("Budget setup failed:", error);
+      Alert.alert(
+        "Couldn't finish setup",
+        "Check your connection and try again. Your answers are still here."
+      );
+      finishingRef.current = false;
       setIsWorking(false);
       return;
     }
 
-    console.log("updating");
-    const response = await updatePreferences({
-      budgetOnboardComplete: true,
-      // updateFreq: frequencyDropdownValue,
-      // updateFreqDate: dateFreqDropdownValue,
-      startAmount: startAmount,
-      // addAmount: addAmount,
-    });
-
-    // create virtual balance
-    console.log("creating virtual balance");
-    const vBalance = await createVirtualBalance(
-      parseInt(startAmount),
-      frequencyDropdownValue,
-      parseInt(addAmount)
-    );
-
+    finishingRef.current = false;
     setIsWorking(false);
     router.replace("budget");
     update();
@@ -171,8 +212,8 @@ const BudgetSetup = ({ update }) => {
               Welcome to Budgeting{"\n"}with Mintable
             </Text>
 
-            <Text className="text-gray-500 font-regular text-md text-center mt-10">
-              Create and manage your own budgets.
+            <Text className="text-muted font-pregular text-base text-center mt-10">
+              Set savings goals and watch them fill up.
             </Text>
 
             <View className="border-2 rounded-md border-alt-100 p-5 mt-2 border-b-4">
@@ -184,8 +225,8 @@ const BudgetSetup = ({ update }) => {
               />
             </View>
 
-            <Text className="text-gray-500 font-regular text-md text-center mt-10">
-              Set due dates that work for you.
+            <Text className="text-muted font-pregular text-base text-center mt-10">
+              Add a target date if you want one.
             </Text>
 
             <View className="border-2 rounded-md border-alt-100 border-b-4 p-5 mt-2">
@@ -194,12 +235,12 @@ const BudgetSetup = ({ update }) => {
                 progress={1355}
                 goal={1500}
                 noMargin={true}
-                end={twoDays}
+                date={twoDays}
                 color={"#ffadad"}
               />
             </View>
 
-            <Text className="text-gray-500 font-regular text-md text-center mt-10">
+            <Text className="text-muted font-pregular text-base text-center mt-10">
               Customize how often your virtual balance resets.
             </Text>
 
@@ -207,15 +248,15 @@ const BudgetSetup = ({ update }) => {
               <View className="flex-row">
                 <View className="justify-center items-start">
                   <Text className="text-white font-pregular">
-                    Amount to Allocate
+                    Virtual Balance
                   </Text>
                   <Text className="text-5xl font-plight text-white pt-3">
                     $1,000
                   </Text>
                 </View>
                 <View className="flex-1 items-end justify-center">
-                  <Text className="text-gray-500 text-xl font-pregular text-right">
-                    Reloads in: {"\n"} 1 Week
+                  <Text className="text-muted text-xl font-pregular text-right">
+                    Updates in {"\n"} 1 week
                   </Text>
                 </View>
               </View>
@@ -249,7 +290,7 @@ const BudgetSetup = ({ update }) => {
               How often should your virtual balance be updated?
             </Text>
 
-            <Text className="text-gray-500 font-pregular text-md text-center mt-5">
+            <Text className="text-muted font-pregular text-md text-center mt-5">
               For the best experience, choose a frequency that aligns with how
               often you receive payments, such as from a job or allowance.
             </Text>
@@ -319,7 +360,7 @@ const BudgetSetup = ({ update }) => {
               {frequencyDropdownValue}?
             </Text>
 
-            <Text className="text-gray-500 font-pregular text-md text-center mt-5">
+            <Text className="text-muted font-pregular text-md text-center mt-5">
               Choose an amount that reflects how much you typically receive from
               sources like a job or allowance.
             </Text>
@@ -344,7 +385,7 @@ const BudgetSetup = ({ update }) => {
               How much should your starting virtual balance be?
             </Text>
 
-            <Text className="text-gray-500 font-pregular text-md text-center mt-5">
+            <Text className="text-muted font-pregular text-md text-center mt-5">
               Enter a starting amount that reflects the money you currently have
               or want to begin with.
             </Text>
@@ -423,6 +464,7 @@ const BudgetSetup = ({ update }) => {
               textWeight={"font-pregular"}
               containerStyles={"flex-1"}
               isWorking={isWorking}
+              disabledd={isWorking}
               handlePress={() => handleFinish()}
             />
           )}
